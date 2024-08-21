@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+				<title>Clock In/Out Tracker</title>
+				<style>
+					body {
+						font-family: Arial, sans-serif;
+						margin: 50px;
+					}
+				.container {
+					max-width: 300px;
+					margin: auto;
+					text-align: center;
+				}
+				input[type="text"], button {
+					padding: 10px;
+					margin: 5px;
+					width: 100%;
+				}
+				</style>
+	</head>
+	<body>
+		<div class="container">
+			<h1>Clock In/Out</h1>
+			<input type="text" id="userInput" placeholder="Enter your name">
+				<button onclick="clockIn()">Clock In</button>
+				<button onclick="clockOut()">Clock Out</button>
+				</div>
+		
+		<script>
+			async function clockIn() {
+				const name = document.getElementById('userInput').value;
+				if (name) {
+					const response = await fetch('/clock-in', {
+												 method: 'POST',
+												 headers: { 'Content-Type': 'application/json' },
+												 body: JSON.stringify({ name: name, time: new Date().toISOString() })
+												 });
+												 alert(await response.text());
+				} else {
+					alert('Please enter your name.');
+				}
+			}
+		
+		async function clockOut() {
+			const name = document.getElementById('userInput').value;
+			if (name) {
+				const response = await fetch('/clock-out', {
+											 method: 'POST',
+											 headers: { 'Content-Type': 'application/json' },
+											 body: JSON.stringify({ name: name, time: new Date().toISOString() })
+											 });
+											 alert(await response.text());
+			} else {
+				alert('Please enter your name.');
+			}
+		}
+		</script>
+	</body>
+</html>
+
