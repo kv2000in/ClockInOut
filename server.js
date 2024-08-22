@@ -34,6 +34,9 @@ app.get('/records', (req, res) => {
 		const records = JSON.parse(fs.readFileSync(recordsFile));
 		res.json(records);
 		});
+app.get('/index.html', (req, res) => {
+		res.sendFile('index.html');
+		});
 
 app.listen(3000, () => {
 		   console.log('Server is running on port 3000');
