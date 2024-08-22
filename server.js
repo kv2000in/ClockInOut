@@ -13,17 +13,19 @@ if (!fs.existsSync(recordsFile)) {
 }
 
 app.post('/clock-in', (req, res) => {
-		 const { name, time } = req.body;
+		 const name = req.body.name;
+		 const time = req.body.time;
 		 const records = JSON.parse(fs.readFileSync(recordsFile));
-		 records.push({ name, time, action: 'clock-in' });
+		 records.push({ name: name, time: time, action: 'clock-in' });
 		 fs.writeFileSync(recordsFile, JSON.stringify(records));
 		 res.send('Clock In recorded');
 		 });
 
 app.post('/clock-out', (req, res) => {
-		 const { name, time } = req.body;
+		 const name = req.body.name;
+		 const time = req.body.time;
 		 const records = JSON.parse(fs.readFileSync(recordsFile));
-		 records.push({ name, time, action: 'clock-out' });
+		 records.push({ name: name, time: time, action: 'clock-out' });
 		 fs.writeFileSync(recordsFile, JSON.stringify(records));
 		 res.send('Clock Out recorded');
 		 });
@@ -36,4 +38,3 @@ app.get('/records', (req, res) => {
 app.listen(3000, () => {
 		   console.log('Server is running on port 3000');
 		   });
-
