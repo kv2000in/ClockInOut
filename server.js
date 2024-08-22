@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
+const path = require('path');
 
 const app = express();
 app.use(bodyParser.json());
@@ -35,7 +36,8 @@ app.get('/records', (req, res) => {
 		res.json(records);
 		});
 app.get('/index.html', (req, res) => {
-		res.sendFile('index.html',{ root:'/'});
+		res.sendFile('index.html',{ root: path.join(__dirname, 'ClockInOut
+												') })
 		});
 
 app.listen(3000, () => {
