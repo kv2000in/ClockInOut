@@ -80,6 +80,8 @@ app.get('/records', (req, res) => {
 						}
 						});
 		
+		console.log('Filtered Records:', filteredRecords); // Debugging statement
+		
 		if (exportCSV === 'true') {
 		// Generate CSV content
 		const csvHeaders = ['Name', 'Assignment', 'Clock-in Time', 'Clock-out Time', 'Time at Work'];
@@ -125,3 +127,4 @@ app.get('/index.html', (req, res) => {
 app.listen(3000, () => {
 		   console.log('Server is running on port 3000');
 		   });
+
