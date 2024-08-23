@@ -14,7 +14,7 @@
 					margin: auto;
 					text-align: center;
 				}
-				input[type="text"], button {
+				input[type="text"], input[type="datetime-local"], button {
 					padding: 10px;
 					margin: 5px;
 					width: 100%;
@@ -25,39 +25,113 @@
 		<div class="container">
 			<h1>Clock In/Out</h1>
 			<input type="text" id="userInput" placeholder="Enter your name">
-				<button onclick="clockIn()">Clock In</button>
-				<button onclick="clockOut()">Clock Out</button>
-				</div>
+				<input type="text" id="assignmentInput" placeholder="Enter your assignment">
+					<input type="datetime-local" id="dateTimeInput">
+						<button onclick="clockIn()">Clock In</button>
+						<button onclick="clockOut()">Clock Out</button>
+						
+						<h2>Get Records</h2>
+						<input type="datetime-local" id="startDate">
+							<input type="datetime-local" id="endDate">
+								<button onclick="getRecords()">Get Records</button>
+								<button onclick="getLastWeekRecords()">Last Week</button>
+								<button onclick="getLastMonthRecords()">Last Month</button>
+								</div>
 		
 		<script>
-			async function clockIn() {
-				const name = document.getElementById('userInput').value;
-				if (name) {
-					const response = await fetch('/clock-in', {
-												 method: 'POST',
-												 headers: { 'Content-Type': 'application/json' },
-												 body: JSON.stringify({ name: name, time: new Date().toISOString() })
-												 });
-												 alert(await response.text());
-				} else {
-					alert('Please enter your name.');
+				// Set default date-time to current local date-time
+				function setDefaultDateTime() {
+					const now = new Date().toISOString().slice(0, 16);
+					document.getElementById('dateTimeInput').value = now;
+					document.getElementById('startDate').value = now;
+					document.getElementById('endDate').value = now;
 				}
-			}
 		
-		async function clockOut() {
+		window.onload = setDefaultDateTime;
+		
+		async function clockIn() {
 			const name = document.getElementById('userInput').value;
-			if (name) {
-				const response = await fetch('/clock-out', {
+			const assignment = document.getElementById('assignmentInput').value;
+			const dateTime = document.getElementById('dateTimeInput').value;
+			if (name && dateTime) {
+				const response = await fetch('/clock-in', {
 											 method: 'POST',
 											 headers: { 'Content-Type': 'application/json' },
-											 body: JSON.stringify({ name: name, time: new Date().toISOString() })
+											 body: JSON.stringify({ name: name, time: dateTime, assignment: assignment })
 											 });
 											 alert(await response.text());
 			} else {
-				alert('Please enter your name.');
+				alert('Please enter your name and select a date/time.');
 			}
 		}
-		</script>
+		
+		async function clockOut() {
+			const name = document.getElementById('userInput').value;
+			const assignment = document.getElementById('assignmentInput').value;
+			const dateTime = document.getElementById('dateTimeInput').value;
+			if (name && dateTime) {
+				const response = await fetch('/clock-out', {
+											 method: 'POST',
+											 headers: { 'Content-Type': 'application/json' },
+											 body: JSON.stringify({ name: name, time: dateTime, assignment: assignment })
+											 });
+											 alert(await response.text());
+			} else {
+				alert('Please enter your name and select a date/time.');
+			}
+		}
+		
+		async function getRecords() {
+			const startDate = document.getElementById('startDate').value;
+			const endDate = document.getElementById('endDate').value;
+			const name = document.getElementById('userInput').value;
+			if (startDate && endDate && name) {
+				const response = await fetch(`/records?start=${startDate}&end=${endDate}&name=${name}`);
+				const data = await response.json();
+				
+					// Create a CSV string
+					const csvContent = "data:text/csv;charset=utf-8," + 
+					data.map(record => `${record.name},${record.assignment},${record.time},${record.action}`).join("\n");
+					
+						// Create a download link
+						const encodedUri = encodeURI(csvContent);
+						const link = document.createElement("a");
+						link.setAttribute("href", encodedUri);
+						
+							// Format filename
+							const startFormat = new Date(startDate).toLocaleDateString('en-GB').replace(/\//g, '');
+																										const endFormat = new Date(endDate).toLocaleDateString('en-GB').replace(/\//g, '');
+																																												const fileName = `${name}_${startFormat}_${endFormat}.csv`;
+																																												
+																																												link.setAttribute("download", fileName);
+																																												document.body.appendChild(link); // Required for FF
+																																												
+																																												// Start download
+																																												link.click();
+																																												document.body.removeChild(link); // Clean up
+																																												} else {
+																																												alert('Please select start/end dates and enter your name.');
+																																												}
+																																												}
+																																												
+																																												async function getLastWeekRecords() {
+																																												const endDate = new Date();
+																																												const startDate = new Date();
+																																												startDate.setDate(endDate.getDate() - 7);
+																																												document.getElementById('startDate').value = startDate.toISOString().slice(0, 16);
+																																												document.getElementById('endDate').value = endDate.toISOString().slice(0, 16);
+																																												getRecords();
+																																												}
+																																												
+																																												async function getLastMonthRecords() {
+																																												const endDate = new Date();
+																																												const startDate = new Date();
+																																												startDate.setMonth(endDate.getMonth() - 1);
+																																												document.getElementById('startDate').value = startDate.toISOString().slice(0, 16);
+																																												document.getElementById('endDate').value = endDate.toISOString().slice(0, 16);
+																																												getRecords();
+																																												}
+																																												</script>
 	</body>
 </html>
 
