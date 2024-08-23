@@ -14,23 +14,44 @@ if (!fs.existsSync(recordsFile)) {
 }
 
 app.post('/clock-in', (req, res) => {
-		 const { name, time, assignment } = req.body;
+		 const body = req.body;
+		 const name = body.name;
+		 const time = body.time;
+		 const assignment = body.assignment;
+		 
 		 const records = JSON.parse(fs.readFileSync(recordsFile));
-		 records.push({ name, clockInTime: new Date(time).toISOString(), assignment, action: 'clock-in' });
+		 records.push({
+					  name: name,
+					  clockInTime: new Date(time).toISOString(),
+					  assignment: assignment,
+					  action: 'clock-in'
+					  });
 		 fs.writeFileSync(recordsFile, JSON.stringify(records));
 		 res.send('Clock In recorded');
 		 });
 
 app.post('/clock-out', (req, res) => {
-		 const { name, time, assignment } = req.body;
+		 const body = req.body;
+		 const name = body.name;
+		 const time = body.time;
+		 const assignment = body.assignment;
+		 
 		 const records = JSON.parse(fs.readFileSync(recordsFile));
-		 records.push({ name, clockOutTime: new Date(time).toISOString(), assignment, action: 'clock-out' });
+		 records.push({
+					  name: name,
+					  clockOutTime: new Date(time).toISOString(),
+					  assignment: assignment,
+					  action: 'clock-out'
+					  });
 		 fs.writeFileSync(recordsFile, JSON.stringify(records));
 		 res.send('Clock Out recorded');
 		 });
 
 app.get('/records', (req, res) => {
-		const { start, end, name } = req.query;
+		const start = req.query.start;
+		const end = req.query.end;
+		const name = req.query.name;
+		
 		const records = JSON.parse(fs.readFileSync(recordsFile));
 		
 		// Convert to local date strings
