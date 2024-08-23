@@ -36,8 +36,7 @@ app.get('/records', (req, res) => {
 		res.json(records);
 		});
 app.get('/index.html', (req, res) => {
-		res.sendFile('index.html',{ root: path.join(__dirname, 'ClockInOut
-												') })
+		res.sendFile('index.html')
 		});
 
 app.listen(3000, () => {
