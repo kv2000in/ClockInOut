@@ -19,6 +19,10 @@
 					margin: 5px;
 					width: 100%;
 				}
+				#timer {
+					font-size: 20px;
+					margin: 10px 0;
+				}
 				</style>
 	</head>
 	<body>
@@ -26,137 +30,84 @@
 			<h1>Clock In/Out</h1>
 			<input type="text" id="userInput" placeholder="Enter your name">
 				<input type="text" id="assignmentInput" placeholder="Enter your assignment">
-					<input type="datetime-local" id="dateTimeInput">
-						<button onclick="clockIn()">Clock In</button>
-						<button onclick="clockOut()">Clock Out</button>
+					<input type="datetime-local" id="dateTimeInput" placeholder="Select Date and Time">
+						<button id="clockInButton" onclick="clockIn()">Clock In</button>
+						<button id="clockOutButton" onclick="clockOut()" disabled>Clock Out</button>
+						<div id="timer">00:00</div>
 						
 						<h2>Get Records</h2>
-						<input type="datetime-local" id="startDate">
-							<input type="datetime-local" id="endDate">
+						<input type="datetime-local" id="startDate" placeholder="Start Date">
+							<input type="datetime-local" id="endDate" placeholder="End Date">
 								<button onclick="getRecords()">Get Records</button>
 								<button onclick="getLastWeekRecords()">Last Week</button>
 								<button onclick="getLastMonthRecords()">Last Month</button>
 								</div>
 		
 		<script>
-			function formatDateToLocalString(date) {
-				const year = date.getFullYear();
-				const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
-				const day = String(date.getDate()).padStart(2, '0');
-				const hours = String(date.getHours()).padStart(2, '0');
-				const minutes = String(date.getMinutes()).padStart(2, '0');
-				return `${year}-${month}-${day}T${hours}:${minutes}`;
+			let timerInterval;
+			let startTime;
+			
+			async function clockIn() {
+				const name = document.getElementById('userInput').value;
+				const assignment = document.getElementById('assignmentInput').value;
+				const dateTime = document.getElementById('dateTimeInput').value;
+				if (name && dateTime) {
+					const response = await fetch('/clock-in', {
+												 method: 'POST',
+												 headers: { 'Content-Type': 'application/json' },
+												 body: JSON.stringify({ name: name, time: dateTime, assignment: assignment })
+												 });
+												 const message = await response.text();
+												 alert(message);
+												 
+												 if (response.ok) {
+													 startTime = new Date();
+													 startTimer();
+													 document.getElementById('clockInButton').disabled = true;
+													 document.getElementById('clockOutButton').disabled = false;
+												 }
+				} else {
+					alert('Please enter your name and select a date/time.');
+				}
 			}
-		
-		function setDefaultDateTime() {
-			const now = new Date();
-			const localDateTime = formatDateToLocalString(now);
-			document.getElementById('dateTimeInput').value = localDateTime;
-			document.getElementById('startDate').value = localDateTime;
-			document.getElementById('endDate').value = localDateTime;
-		}
-		
-		window.onload = setDefaultDateTime;
-		
-		async function clockIn() {
-			const name = document.getElementById('userInput').value;
-			const assignment = document.getElementById('assignmentInput').value;
-			const dateTime = document.getElementById('dateTimeInput').value;
-			if (name && dateTime) {
-				const response = await fetch('/clock-in', {
-											 method: 'POST',
-											 headers: { 'Content-Type': 'application/json' },
-											 body: JSON.stringify({ name: name, time: dateTime, assignment: assignment })
-											 });
-											 alert(await response.text());
-			} else {
-				alert('Please enter your name and select a date/time.');
-			}
-		}
 		
 		async function clockOut() {
 			const name = document.getElementById('userInput').value;
-			const assignment = document.getElementById('assignmentInput').value;
 			const dateTime = document.getElementById('dateTimeInput').value;
 			if (name && dateTime) {
 				const response = await fetch('/clock-out', {
 											 method: 'POST',
 											 headers: { 'Content-Type': 'application/json' },
-											 body: JSON.stringify({ name: name, time: dateTime, assignment: assignment })
+											 body: JSON.stringify({ name: name, time: dateTime })
 											 });
-											 alert(await response.text());
+											 const message = await response.text();
+											 alert(message);
+											 
+											 if (response.ok) {
+												 stopTimer();
+												 document.getElementById('clockInButton').disabled = false;
+												 document.getElementById('clockOutButton').disabled = true;
+											 }
 			} else {
 				alert('Please enter your name and select a date/time.');
 			}
 		}
 		
-		async function getRecords() {
-			const startDate = document.getElementById('startDate').value;
-			const endDate = document.getElementById('endDate').value;
-			const name = document.getElementById('userInput').value;
-			if (name) {
-				if (startDate && endDate) {
-					const response = await fetch(`/records?start=${startDate}&end=${endDate}&name=${name}`);
-					const data = await response.json();
-					
-						// Create a CSV string
-						let csvContent = "data:text/csv;charset=utf-8,Name,Assignment,Clock-in time,Clock-out time,Time at Work\n";
-						csvContent += data.map(record => {
-											   const clockInTime = new Date(record.clockInTime);
-											   const clockOutTime = new Date(record.clockOutTime);
-											   const timeAtWork = calculateTimeAtWork(clockInTime, clockOutTime);
-											   return `${record.name},${record.assignment},${record.clockInTime},${record.clockOutTime},${timeAtWork}`;
-											   }).join("\n");
-											   
-												   // Create a download link
-												   const encodedUri = encodeURI(csvContent);
-												   const link = document.createElement("a");
-												   link.setAttribute("href", encodedUri);
-												   
-													   // Format filename
-													   const startFormat = formatDateToLocalString(new Date(startDate)).slice(0, 10).replace(/-/g, '');
-													   const endFormat = formatDateToLocalString(new Date(endDate)).slice(0, 10).replace(/-/g, '');
-													   const fileName = `${name}_${startFormat}_${endFormat}.csv`;
-													   
-													   link.setAttribute("download", fileName);
-													   document.body.appendChild(link); // Required for FF
-													   
-														   // Start download
-														   link.click();
-														   document.body.removeChild(link); // Clean up
-				} else {
-					alert('Please select both start and end dates.');
-				}
-			} else {
-				alert('Please enter your name.');
-			}
+		function startTimer() {
+			const timerDisplay = document.getElementById('timer');
+			const updateTimer = () => {
+				const now = new Date();
+				const elapsed = new Date(now - startTime);
+				const hours = String(elapsed.getUTCHours()).padStart(2, '0');
+				const minutes = String(elapsed.getUTCMinutes()).padStart(2, '0');
+				timerDisplay.textContent = `${hours}:${minutes}`;
+			};
+			timerInterval = setInterval(updateTimer, 1000);
+			updateTimer();
 		}
 		
-		function calculateTimeAtWork(clockInTime, clockOutTime) {
-			const diff = (clockOutTime - clockInTime) / 1000; // difference in seconds
-			const hours = Math.floor(diff / 3600);
-			const minutes = Math.floor((diff % 3600) / 60);
-			return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-		}
+		function stopTimer() {
+			clearInterval(timerInterval);
+			document.getElementById('timer').textContent = '00:00';
 		
-		async function getLastWeekRecords() {
-			const endDate = new Date();
-			const startDate = new Date();
-			startDate.setDate(endDate.getDate() - 7);
-			document.getElementById('startDate').value = formatDateToLocalString(startDate);
-			document.getElementById('endDate').value = formatDateToLocalString(endDate);
-			getRecords();
-		}
-		
-		async function getLastMonthRecords() {
-			const endDate = new Date();
-			const startDate = new Date();
-			startDate.setMonth(endDate.getMonth() - 1);
-			document.getElementById('startDate').value = formatDateToLocalString(startDate);
-			document.getElementById('endDate').value = formatDateToLocalString(endDate);
-			getRecords();
-		}
-		</script>
-	</body>
-</html>
 

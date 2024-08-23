@@ -20,11 +20,18 @@ app.post('/clock-in', (req, res) => {
 		 const assignment = body.assignment;
 		 
 		 const records = JSON.parse(fs.readFileSync(recordsFile));
+		 // Check if there is already a clock-in record without a clock-out
+		 let existingRecord = records.find(record => record.name === name && !record.clockOutTime);
+		 
+		 if (existingRecord) {
+		 res.status(400).send('Already clocked in.');
+		 return;
+		 }
+		 
 		 records.push({
 					  name: name,
 					  clockInTime: new Date(time).toISOString(),
-					  assignment: assignment,
-					  action: 'clock-in'
+					  assignment: assignment
 					  });
 		 fs.writeFileSync(recordsFile, JSON.stringify(records));
 		 res.send('Clock In recorded');
@@ -34,15 +41,17 @@ app.post('/clock-out', (req, res) => {
 		 const body = req.body;
 		 const name = body.name;
 		 const time = body.time;
-		 const assignment = body.assignment;
 		 
 		 const records = JSON.parse(fs.readFileSync(recordsFile));
-		 records.push({
-					  name: name,
-					  clockOutTime: new Date(time).toISOString(),
-					  assignment: assignment,
-					  action: 'clock-out'
-					  });
+		 // Find the matching clock-in record
+		 let existingRecord = records.find(record => record.name === name && !record.clockOutTime);
+		 
+		 if (!existingRecord) {
+		 res.status(400).send('No clock-in record found.');
+		 return;
+		 }
+		 
+		 existingRecord.clockOutTime = new Date(time).toISOString();
 		 fs.writeFileSync(recordsFile, JSON.stringify(records));
 		 res.send('Clock Out recorded');
 		 });
@@ -63,8 +72,7 @@ app.get('/records', (req, res) => {
 		// Filter records by date range and name
 		const filteredRecords = [];
 		records.forEach(function(record) {
-						if (record.name === name) {
-						if (record.clockInTime && record.clockOutTime) {
+						if (record.name === name && record.clockInTime && record.clockOutTime) {
 						const clockInTime = new Date(record.clockInTime);
 						const clockOutTime = new Date(record.clockOutTime);
 						if (clockInTime >= startDate && clockOutTime <= endDate) {
@@ -77,10 +85,7 @@ app.get('/records', (req, res) => {
 											 });
 						}
 						}
-						}
 						});
-		
-		console.log('Filtered Records:', filteredRecords); // Debugging statement
 		
 		if (filteredRecords.length === 0) {
 		// No records found
