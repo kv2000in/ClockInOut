@@ -82,6 +82,12 @@ app.get('/records', (req, res) => {
 		
 		console.log('Filtered Records:', filteredRecords); // Debugging statement
 		
+		if (filteredRecords.length === 0) {
+		// No records found
+		res.status(404).send('No data exists for the name and time period selected.');
+		return;
+		}
+		
 		if (exportCSV === 'true') {
 		// Generate CSV content
 		const csvHeaders = ['Name', 'Assignment', 'Clock-in Time', 'Clock-out Time', 'Time at Work'];
