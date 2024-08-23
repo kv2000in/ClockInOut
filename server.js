@@ -48,9 +48,7 @@ app.post('/clock-out', (req, res) => {
 		 });
 
 app.get('/records', (req, res) => {
-		const start = req.query.start;
-		const end = req.query.end;
-		const name = req.query.name;
+		const { start, end, name, exportCSV } = req.query;
 		
 		const records = JSON.parse(fs.readFileSync(recordsFile));
 		
@@ -69,8 +67,8 @@ app.get('/records', (req, res) => {
 						filteredRecords.push({
 											 name: record.name,
 											 assignment: record.assignment,
-											 clockInTime: record.clockInTime,
-											 clockOutTime: record.clockOutTime,
+											 clockInTime: clockInTime.toLocaleString(),
+											 clockOutTime: clockOutTime.toLocaleString(),
 											 timeAtWork: calculateTimeAtWork(clockInTime, clockOutTime)
 											 });
 						}
@@ -78,7 +76,31 @@ app.get('/records', (req, res) => {
 						}
 						});
 		
+		if (exportCSV === 'true') {
+		// Generate CSV content
+		const csvHeaders = ['Name', 'Assignment', 'Clock-in Time', 'Clock-out Time', 'Time at Work'];
+		const csvRows = [csvHeaders.join(',')];
+		
+		filteredRecords.forEach(record => {
+								const row = [
+											 `"${record.name}"`,
+											 `"${record.assignment}"`,
+											 `"${record.clockInTime}"`,
+											 `"${record.clockOutTime}"`,
+											 `"${record.timeAtWork}"`
+											 ];
+								csvRows.push(row.join(','));
+								});
+		
+		const csvContent = csvRows.join('\n');
+		
+		// Set headers for CSV file download
+		res.header('Content-Type', 'text/csv');
+		res.header('Content-Disposition', `attachment; filename="records_${formatDate(startDate)}_${formatDate(endDate)}.csv"`);
+		res.send(csvContent);
+		} else {
 		res.json(filteredRecords);
+		}
 		});
 
 function calculateTimeAtWork(clockInTime, clockOutTime) {
@@ -88,6 +110,10 @@ function calculateTimeAtWork(clockInTime, clockOutTime) {
 	return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 }
 
+function formatDate(date) {
+	return date.toISOString().split('T')[0].replace(/-/g, '');
+}
+
 app.get('/index.html', (req, res) => {
 		res.sendFile('index.html', { root: path.join(__dirname) });
 		});
@@ -95,4 +121,3 @@ app.get('/index.html', (req, res) => {
 app.listen(3000, () => {
 		   console.log('Server is running on port 3000');
 		   });
-
