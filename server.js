@@ -48,7 +48,11 @@ app.post('/clock-out', (req, res) => {
 		 });
 
 app.get('/records', (req, res) => {
-		const { start, end, name, exportCSV } = req.query;
+		const query = req.query;
+		const start = query.start;
+		const end = query.end;
+		const name = query.name;
+		const exportCSV = query.exportCSV;
 		
 		const records = JSON.parse(fs.readFileSync(recordsFile));
 		
@@ -58,7 +62,7 @@ app.get('/records', (req, res) => {
 		
 		// Filter records by date range and name
 		const filteredRecords = [];
-		records.forEach(record => {
+		records.forEach(function(record) {
 						if (record.name === name) {
 						if (record.clockInTime && record.clockOutTime) {
 						const clockInTime = new Date(record.clockInTime);
@@ -81,7 +85,7 @@ app.get('/records', (req, res) => {
 		const csvHeaders = ['Name', 'Assignment', 'Clock-in Time', 'Clock-out Time', 'Time at Work'];
 		const csvRows = [csvHeaders.join(',')];
 		
-		filteredRecords.forEach(record => {
+		filteredRecords.forEach(function(record) {
 								const row = [
 											 `"${record.name}"`,
 											 `"${record.assignment}"`,
