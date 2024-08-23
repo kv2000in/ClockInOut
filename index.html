@@ -40,11 +40,18 @@
 		
 		<script>
 			function setDefaultDateTime() {
-				const now = new Date().toISOString().slice(0, 16);
-				document.getElementById('dateTimeInput').value = now;
-				document.getElementById('startDate').value = now;
-				document.getElementById('endDate').value = now;
+				const now = new Date();
+				const localDateTime = now.toISOString().slice(0, 16);
+				document.getElementById('dateTimeInput').value = localDateTime;
+				document.getElementById('startDate').value = localDateTime;
+				document.getElementById('endDate').value = localDateTime;
 			}
+		
+		function formatDateToLocalISOString(date) {
+			const offset = date.getTimezoneOffset();
+			const localDate = new Date(date.getTime() - offset * 60 * 1000);
+			return localDate.toISOString().slice(0, 16);
+		}
 		
 		window.onload = setDefaultDateTime;
 		
@@ -104,8 +111,8 @@
 												   link.setAttribute("href", encodedUri);
 												   
 													   // Format filename
-													   const startFormat = formatDate(new Date(startDate));
-													   const endFormat = formatDate(new Date(endDate));
+													   const startFormat = formatDateToLocalISOString(new Date(startDate)).slice(0, 10).replace(/-/g, '');
+													   const endFormat = formatDateToLocalISOString(new Date(endDate)).slice(0, 10).replace(/-/g, '');
 													   const fileName = `${name}_${startFormat}_${endFormat}.csv`;
 													   
 													   link.setAttribute("download", fileName);
@@ -129,19 +136,12 @@
 			return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 		}
 		
-		function formatDate(date) {
-			const day = String(date.getDate()).padStart(2, '0');
-			const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
-			const year = date.getFullYear().toString().slice(-2);
-			return `${day}${month}${year}`;
-		}
-		
 		async function getLastWeekRecords() {
 			const endDate = new Date();
 			const startDate = new Date();
 			startDate.setDate(endDate.getDate() - 7);
-			document.getElementById('startDate').value = startDate.toISOString().slice(0, 16);
-			document.getElementById('endDate').value = endDate.toISOString().slice(0, 16);
+			document.getElementById('startDate').value = formatDateToLocalISOString(startDate);
+			document.getElementById('endDate').value = formatDateToLocalISOString(endDate);
 			getRecords();
 		}
 		
@@ -149,8 +149,8 @@
 			const endDate = new Date();
 			const startDate = new Date();
 			startDate.setMonth(endDate.getMonth() - 1);
-			document.getElementById('startDate').value = startDate.toISOString().slice(0, 16);
-			document.getElementById('endDate').value = endDate.toISOString().slice(0, 16);
+			document.getElementById('startDate').value = formatDateToLocalISOString(startDate);
+			document.getElementById('endDate').value = formatDateToLocalISOString(endDate);
 			getRecords();
 		}
 		</script>

@@ -16,7 +16,7 @@ if (!fs.existsSync(recordsFile)) {
 app.post('/clock-in', (req, res) => {
 		 const { name, time, assignment } = req.body;
 		 const records = JSON.parse(fs.readFileSync(recordsFile));
-		 records.push({ name, clockInTime: time, assignment, action: 'clock-in' });
+		 records.push({ name, clockInTime: new Date(time).toISOString(), assignment, action: 'clock-in' });
 		 fs.writeFileSync(recordsFile, JSON.stringify(records));
 		 res.send('Clock In recorded');
 		 });
@@ -24,7 +24,7 @@ app.post('/clock-in', (req, res) => {
 app.post('/clock-out', (req, res) => {
 		 const { name, time, assignment } = req.body;
 		 const records = JSON.parse(fs.readFileSync(recordsFile));
-		 records.push({ name, clockOutTime: time, assignment, action: 'clock-out' });
+		 records.push({ name, clockOutTime: new Date(time).toISOString(), assignment, action: 'clock-out' });
 		 fs.writeFileSync(recordsFile, JSON.stringify(records));
 		 res.send('Clock Out recorded');
 		 });
@@ -33,6 +33,10 @@ app.get('/records', (req, res) => {
 		const { start, end, name } = req.query;
 		const records = JSON.parse(fs.readFileSync(recordsFile));
 		
+		// Convert to local date strings
+		const startDate = new Date(start);
+		const endDate = new Date(end);
+		
 		// Filter records by date range and name
 		const filteredRecords = [];
 		records.forEach(record => {
@@ -40,7 +44,7 @@ app.get('/records', (req, res) => {
 						if (record.clockInTime && record.clockOutTime) {
 						const clockInTime = new Date(record.clockInTime);
 						const clockOutTime = new Date(record.clockOutTime);
-						if (clockInTime >= new Date(start) && clockOutTime <= new Date(end)) {
+						if (clockInTime >= startDate && clockOutTime <= endDate) {
 						filteredRecords.push({
 											 name: record.name,
 											 assignment: record.assignment,
