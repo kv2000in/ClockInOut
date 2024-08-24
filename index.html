@@ -215,15 +215,36 @@
 		
 		function formatDate(date) {
 			const d = new Date(date);
-			return d.toLocaleDateString('en-GB').replace(/\//g, '');
+			return d.toLocaleDateString().replace(/\//g, '');
 														 }
+												  
+												  function formatDateTime(inputDateTime) {
+												  // Parse the input date-time string
+												  const date = new Date(inputDateTime);
+												  
+												  // Function to pad numbers with leading zeros
+												  const pad = (num, size) => num.toString().padStart(size, '0');
+												  
+												  // Extract date components
+												  const year = date.getFullYear();
+												  const month = pad(date.getMonth() + 1, 2); // Months are 0-based
+												  const day = pad(date.getDate(), 2);
+												  
+												  // Extract time components
+												  const hours = pad(date.getHours(), 2);
+												  const minutes = pad(date.getMinutes(), 2);
+												  const seconds = pad(date.getSeconds(), 2);
+												  
+												  // Format into ISO 8601 string
+												  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+												  }
 														 
 														 function getLastWeekRecords() {
 														 const endDate = new Date();
 														 const startDate = new Date();
 														 startDate.setDate(endDate.getDate() - 7);
-														 document.getElementById('startDate').value = formatDate(startDate);
-														 document.getElementById('endDate').value = formatDate(endDate);
+														 document.getElementById('startDate').value = formatDateTime(startDate);
+														 document.getElementById('endDate').value = formatDateTime(endDate);
 														 getRecords();
 														 }
 														 
@@ -231,8 +252,8 @@
 														 const endDate = new Date();
 														 const startDate = new Date();
 														 startDate.setMonth(endDate.getMonth() - 1);
-														 document.getElementById('startDate').value = formatDate(startDate);
-														 document.getElementById('endDate').value = formatDate(endDate);
+														 document.getElementById('startDate').value = formatDateTime(startDate);
+														 document.getElementById('endDate').value = formatDateTime(endDate);
 														 getRecords();
 														 }
 														 
