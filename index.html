@@ -26,7 +26,7 @@
 	<body>
 		<div class="container">
 			<h1>Clock In/Out</h1>
-			<input type="text" id="qgendaurl" placeholder="Enter Qgenda Calendar URL">
+			<input type="text" id="qgendaurl" placeholder="Enter Qgenda Calendar URL" onupdate='handleURLupdate()'>
 				<input type="text" id="assignmentInput" placeholder="Enter your assignment">
 					<input type="datetime-local" id="dateTimeInput">
 						<button id="clockInButton" onclick="clockIn()">Clock In</button>
@@ -88,6 +88,12 @@
 		async function saveRecord(record) {
 			const store = getTransaction(storeName, 'readwrite');
 			store.put(record);
+		}
+		
+		function handleURLupdate(){
+			saveQGendaURL(document.getElementById('qgendaurl').value());
+			displayTodaysAssignment();
+			
 		}
 		
 		async function getRecords() {
@@ -274,8 +280,29 @@
 												  }
 												  
 												  function parseICalendar(data) {
-												  // Implement iCalendar parsing logic here
-												  return [];
+												  const events = [];
+												  const lines = data.split('\n');
+												  let event = null;
+												  
+												  for (const line of lines) {
+												  if (line.startsWith('BEGIN:VEVENT')) {
+												  event = { details: {} };
+												  } else if (line.startsWith('SUMMARY:')) {
+												  event.details.summary = line.replace('SUMMARY:', '');
+												  } else if (line.startsWith('DTSTART:')) {
+												  event.details.start = line.replace('DTSTART:', '');
+												  } else if (line.startsWith('DTEND:')) {
+												  event.details.end = line.replace('DTEND:', '');
+												  } else if (line.startsWith('END:VEVENT')) {
+												  if (event) {
+												  events.push(event);
+												  event = null;
+												  }
+												  }
+												  }
+												  
+												  return events;
+												  
 												  }
 												  
 												  function isToday(date) {
