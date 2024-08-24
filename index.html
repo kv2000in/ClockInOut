@@ -4,7 +4,7 @@
 		<meta charset="UTF-8">
 			<meta name="viewport" content="width=device-width, initial-scale=1.0">
 				<title>Clock In/Out Tracker</title>
-				<link rel="manifest" href="/manifest.json">
+				<link rel="manifest" href="./manifest.json">
 					<style>
 						body {
 							font-family: Arial, sans-serif;
@@ -29,39 +29,42 @@
 	<body>
 		<div class="container">
 			<h1>Clock In/Out</h1>
-			<input type="text" id="defaultName" placeholder="Enter your default name" value="Default Name">
-				<input type="text" id="userInput" placeholder="Enter your name">
-					<input type="text" id="assignmentInput" placeholder="Enter your assignment">
-						<input type="datetime-local" id="dateTimeInput">
-							<button id="clockInButton" onclick="clockIn()">Clock In</button>
-							<button id="clockOutButton" onclick="clockOut()" disabled>Clock Out</button>
-							<div id="timer">00:00</div>
-							
-							<h2>Get Records</h2>
-							<input type="datetime-local" id="startDate">
-								<input type="datetime-local" id="endDate">
-									<button onclick="getRecords()">Get Records</button>
-									<button onclick="getLastWeekRecords()">Last Week</button>
-									<button onclick="getLastMonthRecords()">Last Month</button>
-									<button onclick="clearLocalStorage()">Clear Local Storage</button>
-		</div>
+			<input type="text" id="userInput" placeholder="Enter your name">
+				<input type="text" id="assignmentInput" placeholder="Enter your assignment">
+					<input type="datetime-local" id="dateTimeInput">
+						<button id="clockInButton" onclick="clockIn()">Clock In</button>
+						<button id="clockOutButton" onclick="clockOut()" disabled>Clock Out</button>
+						<div id="timer">00:00</div>
+						
+						<h2>Get Records</h2>
+						<input type="datetime-local" id="startDate">
+							<input type="datetime-local" id="endDate">
+								<button onclick="getRecords()">Get Records</button>
+								<button onclick="getLastWeekRecords()">Last Week</button>
+								<button onclick="getLastMonthRecords()">Last Month</button>
+								<button onclick="clearLocalStorage()">Clear Local Storage</button>
+								</div>
 		
 		<script>
 			let timerInterval;
 			let startTime;
 			
-				// Function to initialize the datetime-local inputs with current local time
-				function initializeDateTimeInputs() {
-					const now = new Date();
-					const localDateTime = formatDateTime(now);
-					document.getElementById('dateTimeInput').value = localDateTime;
-					document.getElementById('startDate').value = localDateTime;
-					document.getElementById('endDate').value = localDateTime;
+			function initializeDateTimeInputs() {
+				const now = new Date();
+				const localDateTime = formatDateTime(now);
+				document.getElementById('dateTimeInput').value = localDateTime;
+				document.getElementById('startDate').value = localDateTime;
+				document.getElementById('endDate').value = localDateTime;
+				
+				const lastName = localStorage.getItem('lastEnteredName');
+				if (lastName) {
+					document.getElementById('userInput').value = lastName;
 				}
+			}
 		
 		function formatDateTime(date) {
 			const year = date.getFullYear();
-			const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+			const month = String(date.getMonth() + 1).padStart(2, '0');
 			const day = String(date.getDate()).padStart(2, '0');
 			const hours = String(date.getHours()).padStart(2, '0');
 			const minutes = String(date.getMinutes()).padStart(2, '0');
@@ -78,10 +81,13 @@
 		}
 		
 		async function clockIn() {
-			const name = document.getElementById('userInput').value || document.getElementById('defaultName').value;
+			const name = document.getElementById('userInput').value;
 			const assignment = document.getElementById('assignmentInput').value;
 			const dateTime = document.getElementById('dateTimeInput').value;
+			
 			if (name && dateTime) {
+				localStorage.setItem('lastEnteredName', name);
+				
 				const records = getLocalStorageRecords();
 				records.push({
 							 name: name,
@@ -102,11 +108,13 @@
 		}
 		
 		async function clockOut() {
-			const name = document.getElementById('userInput').value || document.getElementById('defaultName').value;
+			const name = document.getElementById('userInput').value;
 			const dateTime = document.getElementById('dateTimeInput').value;
+			
 			if (name && dateTime) {
 				const records = getLocalStorageRecords();
 				const lastClockInIndex = records.length - 1;
+				
 				if (records[lastClockInIndex].name === name && records[lastClockInIndex].clockOutTime === null) {
 					records[lastClockInIndex].clockOutTime = new Date(dateTime).toLocaleString();
 					saveLocalStorageRecords(records);
@@ -144,7 +152,7 @@
 		function getRecords() {
 			const startDate = new Date(document.getElementById('startDate').value).toLocaleString();
 			const endDate = new Date(document.getElementById('endDate').value).toLocaleString();
-			const name = document.getElementById('userInput').value || document.getElementById('defaultName').value;
+			const name = document.getElementById('userInput').value;
 			
 			if (!name) {
 				alert('Please enter your name.');
@@ -227,25 +235,25 @@
 														 getRecords();
 														 }
 														 
+														 function clearLocalStorage() {
+														 localStorage.removeItem('records');
+														 alert('Local storage cleared.');
+														 }
+														 
 														 window.onload = initializeDateTimeInputs;
 														 
 														 // Service Worker registration
 														 if ('serviceWorker' in navigator) {
 														 window.addEventListener('load', function() {
-																				 navigator.serviceWorker.register('./service-worker.js').then(function(registration) {
-																																			 console.log('Service Worker registered with scope:', registration.scope);
-																																			 }, function(err) {
-																																			 console.log('Service Worker registration failed:', err);
-																																			 });
-																				 });
-														 }
-														 
-														 
-														 function clearLocalStorage() {
-														 localStorage.removeItem('./records');
-														 alert('Local storage cleared.');
-														 }
-														 </script>
+																				 navigator.serviceWorker.register('./service-worker.js').then
+		navigator.serviceWorker.register('./service-worker.js').then(function(registration) {
+																	 console.log('ServiceWorker registration successful with scope: ', registration.scope);
+																	 }).catch(function(error) {
+																			  console.log('ServiceWorker registration failed: ', error);
+																			  });
+																			  });
+																			  }
+			</script>
 	</body>
 </html>
 
