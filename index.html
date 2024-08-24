@@ -5,62 +5,48 @@
 			<meta name="viewport" content="width=device-width, initial-scale=1.0">
 				<title>Clock In/Out Tracker</title>
 				<link rel="manifest" href="./manifest.json">
-				<link rel="icon" href="./icons/favicon.ico" type="image/x-icon">
-					<style>
-						body {
-							font-family: Arial, sans-serif;
-							margin: 50px;
+					<link rel="icon" href="./icons/favicon.ico" type="image/x-icon">
+						<style>
+							body {
+								font-family: Arial, sans-serif;
+								margin: 50px;
+							}
+						.container {
+							max-width: 300px;
+							margin: auto;
+							text-align: center;
 						}
-					.container {
-						max-width: 300px;
-						margin: auto;
-						text-align: center;
-					}
-					input[type="text"], input[type="datetime-local"], button {
-						padding: 10px;
-						margin: 5px;
-						width: 100%;
-					}
-					#timer {
-						font-size: 20px;
-						margin: 10px 0;
-					}
-					</style>
+						input[type="text"], input[type="datetime-local"], button {
+							padding: 10px;
+							margin: 5px;
+							width: 100%;
+						}
+						</style>
 	</head>
 	<body>
 		<div class="container">
 			<h1>Clock In/Out</h1>
-			<input type="text" id="userInput" placeholder="Enter your name">
-				<input type="text" id="assignmentInput" placeholder="Enter your assignment">
-					<input type="datetime-local" id="dateTimeInput">
-						<button id="clockInButton" onclick="clockIn()">Clock In</button>
-						<button id="clockOutButton" onclick="clockOut()" disabled>Clock Out</button>
-						<div id="timer">00:00</div>
-						
-						<h2>Get Records</h2>
-						<input type="datetime-local" id="startDate">
-							<input type="datetime-local" id="endDate">
-								<button onclick="getRecords()">Get Records</button>
-								<button onclick="getLastWeekRecords()">Last Week</button>
-								<button onclick="getLastMonthRecords()">Last Month</button>
-								<button onclick="clearLocalStorage()">Clear Local Storage</button>
-								</div>
+			<input type="text" id="assignmentInput" placeholder="Enter your assignment">
+				<input type="datetime-local" id="dateTimeInput">
+					<button id="clockInButton" onclick="clockIn()">Clock In</button>
+					<button id="clockOutButton" onclick="clockOut()" disabled>Clock Out</button>
+					
+					<h2>Get Records</h2>
+					<input type="datetime-local" id="startDate">
+						<input type="datetime-local" id="endDate">
+							<button onclick="getRecords()">Get Records</button>
+							<button onclick="getLastWeekRecords()">Last Week</button>
+							<button onclick="getLastMonthRecords()">Last Month</button>
+							<button onclick="clearLocalStorage()">Clear Local Storage</button>
+							</div>
 		
 		<script>
-			let timerInterval;
-			let startTime;
-			
 			function initializeDateTimeInputs() {
 				const now = new Date();
 				const localDateTime = formatDateTime(now);
 				document.getElementById('dateTimeInput').value = localDateTime;
 				document.getElementById('startDate').value = localDateTime;
 				document.getElementById('endDate').value = localDateTime;
-				
-				const lastName = localStorage.getItem('lastEnteredName');
-				if (lastName) {
-					document.getElementById('userInput').value = lastName;
-				}
 			}
 		
 		function formatDateTime(date) {
@@ -82,16 +68,12 @@
 		}
 		
 		async function clockIn() {
-			const name = document.getElementById('userInput').value;
 			const assignment = document.getElementById('assignmentInput').value;
 			const dateTime = document.getElementById('dateTimeInput').value;
 			
-			if (name && dateTime) {
-				localStorage.setItem('lastEnteredName', name);
-				
+			if (assignment && dateTime) {
 				const records = getLocalStorageRecords();
 				records.push({
-							 name: name,
 							 clockInTime: new Date(dateTime).toLocaleString(),
 							 assignment: assignment,
 							 clockOutTime: null,
@@ -99,78 +81,49 @@
 							 saveLocalStorageRecords(records);
 							 alert('Clock In recorded');
 							 
-							 startTime = new Date();
-							 startTimer();
 							 document.getElementById('clockInButton').disabled = true;
 							 document.getElementById('clockOutButton').disabled = false;
 			} else {
-				alert('Please enter your name and select a date/time.');
+				alert('Please enter your assignment and select a date/time.');
 			}
 		}
 		
 		async function clockOut() {
-			const name = document.getElementById('userInput').value;
 			const dateTime = document.getElementById('dateTimeInput').value;
 			
-			if (name && dateTime) {
+			if (dateTime) {
 				const records = getLocalStorageRecords();
 				const lastClockInIndex = records.length - 1;
 				
-				if (records[lastClockInIndex].name === name && records[lastClockInIndex].clockOutTime === null) {
+				if (records[lastClockInIndex].clockOutTime === null) {
 					records[lastClockInIndex].clockOutTime = new Date(dateTime).toLocaleString();
 					saveLocalStorageRecords(records);
 					alert('Clock Out recorded');
 					
-					stopTimer();
 					document.getElementById('clockInButton').disabled = false;
 					document.getElementById('clockOutButton').disabled = true;
 				} else {
 					alert('No matching clock-in record found.');
 				}
 			} else {
-				alert('Please enter your name and select a date/time.');
+				alert('Please select a date/time.');
 			}
-		}
-		
-		function startTimer() {
-			const timerDisplay = document.getElementById('timer');
-			const updateTimer = () => {
-				const now = new Date();
-				const elapsed = new Date(now - startTime);
-				const hours = String(elapsed.getUTCHours()).padStart(2, '0');
-				const minutes = String(elapsed.getUTCMinutes()).padStart(2, '0');
-				timerDisplay.textContent = `${hours}:${minutes}`;
-			};
-			timerInterval = setInterval(updateTimer, 1000);
-			updateTimer();
-		}
-		
-		function stopTimer() {
-			clearInterval(timerInterval);
-			document.getElementById('timer').textContent = '00:00';
 		}
 		
 		function getRecords() {
 			const startDate = new Date(document.getElementById('startDate').value).toLocaleString();
 			const endDate = new Date(document.getElementById('endDate').value).toLocaleString();
-			const name = document.getElementById('userInput').value;
-			
-			if (!name) {
-				alert('Please enter your name.');
-				return;
-			}
 			
 			const records = getLocalStorageRecords();
 			const filteredRecords = records.filter(record => {
-												   return record.name === name &&
-												   record.clockInTime &&
+												   return record.clockInTime &&
 												   record.clockOutTime &&
 												   new Date(record.clockInTime) >= new Date(startDate) &&
 												   new Date(record.clockOutTime) <= new Date(endDate);
 												   });
 												   
 												   if (filteredRecords.length === 0) {
-													   alert('No data exists for the name and time period selected.');
+													   alert('No data exists for the selected time period.');
 													   return;
 												   }
 												   
@@ -179,12 +132,11 @@
 		}
 		
 		function generateCSV(records) {
-			const csvHeaders = ['Name', 'Assignment', 'Clock-in Time', 'Clock-out Time', 'Time at Work'];
+			const csvHeaders = ['Assignment', 'Clock-in Time', 'Clock-out Time', 'Time at Work'];
 			const csvRows = [csvHeaders.join(',')];
 			
 			records.forEach(record => {
 							const row = [
-										 `"${record.name}"`,
 										 `"${record.assignment}"`,
 										 `"${record.clockInTime}"`,
 										 `"${record.clockOutTime}"`,
@@ -216,66 +168,56 @@
 		function formatDate(date) {
 			const d = new Date(date);
 			return d.toLocaleDateString().replace(/\//g, '');
-														 }
+												  }
 												  
 												  function formatDateTime(inputDateTime) {
-												  // Parse the input date-time string
 												  const date = new Date(inputDateTime);
-												  
-												  // Function to pad numbers with leading zeros
 												  const pad = (num, size) => num.toString().padStart(size, '0');
-												  
-												  // Extract date components
 												  const year = date.getFullYear();
-												  const month = pad(date.getMonth() + 1, 2); // Months are 0-based
+												  const month = pad(date.getMonth() + 1, 2);
 												  const day = pad(date.getDate(), 2);
-												  
-												  // Extract time components
 												  const hours = pad(date.getHours(), 2);
 												  const minutes = pad(date.getMinutes(), 2);
 												  const seconds = pad(date.getSeconds(), 2);
-												  
-												  // Format into ISO 8601 string
 												  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
 												  }
-														 
-														 function getLastWeekRecords() {
-														 const endDate = new Date();
-														 const startDate = new Date();
-														 startDate.setDate(endDate.getDate() - 7);
-														 document.getElementById('startDate').value = formatDateTime(startDate);
-														 document.getElementById('endDate').value = formatDateTime(endDate);
-														 getRecords();
-														 }
-														 
-														 function getLastMonthRecords() {
-														 const endDate = new Date();
-														 const startDate = new Date();
-														 startDate.setMonth(endDate.getMonth() - 1);
-														 document.getElementById('startDate').value = formatDateTime(startDate);
-														 document.getElementById('endDate').value = formatDateTime(endDate);
-														 getRecords();
-														 }
-														 
-														 function clearLocalStorage() {
-														 localStorage.removeItem('records');
-														 alert('Local storage cleared.');
-														 }
-														 
-														 window.onload = initializeDateTimeInputs;
-														 
-														 // Service Worker registration
-														 if ('serviceWorker' in navigator) {
-														 window.addEventListener('load', function() {
-																				 navigator.serviceWorker.register('./service-worker.js').then
-		navigator.serviceWorker.register('./service-worker.js').then(function(registration) {
-																	 console.log('ServiceWorker registration successful with scope: ', registration.scope);
-																	 }).catch(function(error) {
-																			  console.log('ServiceWorker registration failed: ', error);
-																			  });
-																			  });
-																			  }
-			</script>
+												  
+												  function getLastWeekRecords() {
+												  const endDate = new Date();
+												  const startDate = new Date();
+												  startDate.setDate(endDate.getDate() - 7);
+												  document.getElementById('startDate').value = formatDateTime(startDate);
+												  document.getElementById('endDate').value = formatDateTime(endDate);
+												  getRecords();
+												  }
+												  
+												  function getLastMonthRecords() {
+												  const endDate = new Date();
+												  const startDate = new Date();
+												  startDate.setMonth(endDate.getMonth() - 1);
+												  document.getElementById('startDate').value = formatDateTime(startDate);
+												  document.getElementById('endDate').value = formatDateTime(endDate);
+												  getRecords();
+												  }
+												  
+												  function clearLocalStorage() {
+												  localStorage.removeItem('records');
+												  alert('Local storage cleared.');
+												  }
+												  
+												  window.onload = initializeDateTimeInputs;
+												  
+												  // Service Worker registration
+												  if ('serviceWorker' in navigator) {
+												  window.addEventListener('load', function() {
+																		  navigator.serviceWorker.register('./service-worker.js').then(function(registration) {
+																																	   console.log('ServiceWorker registration successful with scope: ', registration.scope);
+																																	   }).catch(function(error) {
+																																				console.log('ServiceWorker registration failed: ', error);
+																																				});
+																		  });
+												  }
+												  </script>
 	</body>
 </html>
 
