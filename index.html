@@ -85,6 +85,7 @@
 			};
 		}
 		
+		
 		async function saveRecord(record) {
 			const store = getTransaction(storeName, 'readwrite');
 			store.put(record);
@@ -94,6 +95,13 @@
 			saveQGendaURL(document.getElementById('qgendaurl').value());
 			displayTodaysAssignment();
 			
+		}
+		function initializeDateTimeInputs() {
+			const now = new Date();
+			const localDateTime = formatDateTime(now);
+			document.getElementById('dateTimeInput').value = localDateTime;
+			document.getElementById('startDate').value = localDateTime;
+			document.getElementById('endDate').value = localDateTime;
 		}
 		
 		async function getRecords() {
@@ -313,6 +321,20 @@
 												  }
 												  
 												  initDB();
+												  
+												  
+												  window.onload = initializeDateTimeInputs;
+												  
+												  // Service Worker registration
+												  if ('serviceWorker' in navigator) {
+												  window.addEventListener('load', function() {
+																		  navigator.serviceWorker.register('./service-worker.js').then(function(registration) {
+																																	   console.log('ServiceWorker registration successful with scope: ', registration.scope);
+																																	   }).catch(function(error) {
+																																				console.log('ServiceWorker registration failed: ', error);
+																																				});
+																		  });
+												  }
 												  </script>
 	</body>
 </html>
