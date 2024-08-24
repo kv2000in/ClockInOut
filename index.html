@@ -27,178 +27,92 @@
 		<div class="container">
 			<h1>Clock In/Out</h1>
 			<input type="text" id="qgendaurl" placeholder="Enter Qgenda Calendar URL">
-			<input type="text" id="assignmentInput" placeholder="Enter your assignment">
-				<input type="datetime-local" id="dateTimeInput">
-					<button id="clockInButton" onclick="clockIn()">Clock In</button>
-					<button id="clockOutButton" onclick="clockOut()" disabled>Clock Out</button>
-					
-					<h2>Get Records</h2>
-					<input type="datetime-local" id="startDate">
-						<input type="datetime-local" id="endDate">
-							<button onclick="getRecords()">Get Records</button>
-							<button onclick="getLastWeekRecords()">Last Week</button>
-							<button onclick="getLastMonthRecords()">Last Month</button>
-							<button onclick="clearLocalStorage()">Clear Local Storage</button>
-							</div>
+				<input type="text" id="assignmentInput" placeholder="Enter your assignment">
+					<input type="datetime-local" id="dateTimeInput">
+						<button id="clockInButton" onclick="clockIn()">Clock In</button>
+						<button id="clockOutButton" onclick="clockOut()" disabled>Clock Out</button>
+						
+						<h2>Get Records</h2>
+						<input type="datetime-local" id="startDate">
+							<input type="datetime-local" id="endDate">
+								<button onclick="getRecords()">Get Records</button>
+								<button onclick="getLastWeekRecords()">Last Week</button>
+								<button onclick="getLastMonthRecords()">Last Month</button>
+								<button onclick="clearIndexedDB()">Clear IndexedDB</button>
+								</div>
 		
 		<script>
-			function initializeDateTimeInputs() {
-				const now = new Date();
-				const localDateTime = formatDateTime(now);
-				document.getElementById('dateTimeInput').value = localDateTime;
-				document.getElementById('startDate').value = localDateTime;
-				document.getElementById('endDate').value = localDateTime;
-			}
-		
-		function formatDateTime(date) {
-			const year = date.getFullYear();
-			const month = String(date.getMonth() + 1).padStart(2, '0');
-			const day = String(date.getDate()).padStart(2, '0');
-			const hours = String(date.getHours()).padStart(2, '0');
-			const minutes = String(date.getMinutes()).padStart(2, '0');
-			return `${year}-${month}-${day}T${hours}:${minutes}`;
-		}
-		
-		function getLocalStorageRecords() {
-			const records = localStorage.getItem('records');
-			return records ? JSON.parse(records) : [];
-		}
-		
-		function saveLocalStorageRecords(records) {
-			localStorage.setItem('records', JSON.stringify(records));
-		}
-		async function fetchCalendar(url) {
-			try {
-				const response = await fetch(url);
-				const data = await response.text();
-				return data;
-			} catch (error) {
-				console.error('Error fetching calendar:', error);
-				return null;
-			}
-		}
-		
-		function parseICal(data) {
-			const events = [];
-			const lines = data.split('\n');
-			let event = null;
+			const dbName = 'ClockInOutDB';
+			const storeName = 'recordsStore';
+			let db;
 			
-			for (const line of lines) {
-				if (line.startsWith('BEGIN:VEVENT')) {
-					event = { details: {} };
-				} else if (line.startsWith('SUMMARY:')) {
-					event.details.summary = line.replace('SUMMARY:', '');
-				} else if (line.startsWith('DTSTART:')) {
-					event.details.start = line.replace('DTSTART:', '');
-				} else if (line.startsWith('DTEND:')) {
-					event.details.end = line.replace('DTEND:', '');
-				} else if (line.startsWith('END:VEVENT')) {
-					if (event) {
-						events.push(event);
-						event = null;
-					}
-				}
-			}
-			
-			return events;
-		}
-		
-		function getTodayAssignments(events) {
-			const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
-			return events.filter(event => {
-								 const startDate = event.details.start.slice(0, 8); // YYYYMMDD
-								 return startDate === today.replace(/-/g, '');
-								 });
-		}
-		
-		async function displayTodaysAssignment() {
-			const url = document.getElementById('qgendaurl').value();
-			const calendarData = await fetchCalendar(url);
-			
-			if (calendarData) {
-				const events = parseICal(calendarData);
-				const todayAssignments = getTodayAssignments(events);
+			function initDB() {
+				const request = indexedDB.open(dbName, 1);
 				
-				const assignmentDiv = document.getElementById('assignment');
-				if (todayAssignments.length > 0) {
-					assignmentDiv.textContent = todayAssignments[0].details.summary; // Displaying the first assignment of the day
-				} else {
-					assignmentDiv.textContent = 'No assignments for today.';
-				}
-			} else {
-				document.getElementById('assignmentInput').textContent = 'Failed to fetch calendar data.';
-			}
-		}
-		
-		displayTodaysAssignment();
-		
-		
-		
-		
-		
-		
-		async function clockIn() {
-			const assignment = document.getElementById('assignmentInput').value;
-			const dateTime = document.getElementById('dateTimeInput').value;
-			
-			if (assignment && dateTime) {
-				const records = getLocalStorageRecords();
-				records.push({
-							 clockInTime: new Date(dateTime).toLocaleString(),
-							 assignment: assignment,
-							 clockOutTime: null,
-							 });
-							 saveLocalStorageRecords(records);
-							 alert('Clock In recorded');
-							 
-							 document.getElementById('clockInButton').disabled = true;
-							 document.getElementById('clockOutButton').disabled = false;
-			} else {
-				alert('Please enter your assignment and select a date/time.');
-			}
-		}
-		
-		async function clockOut() {
-			const dateTime = document.getElementById('dateTimeInput').value;
-			
-			if (dateTime) {
-				const records = getLocalStorageRecords();
-				const lastClockInIndex = records.length - 1;
+				request.onupgradeneeded = function(event) {
+					db = event.target.result;
+					db.createObjectStore(storeName, { keyPath: 'id', autoIncrement: true });
+				};
 				
-				if (records[lastClockInIndex].clockOutTime === null) {
-					records[lastClockInIndex].clockOutTime = new Date(dateTime).toLocaleString();
-					saveLocalStorageRecords(records);
-					alert('Clock Out recorded');
-					
-					document.getElementById('clockInButton').disabled = false;
-					document.getElementById('clockOutButton').disabled = true;
-				} else {
-					alert('No matching clock-in record found.');
-				}
-			} else {
-				alert('Please select a date/time.');
+				request.onsuccess = function(event) {
+					db = event.target.result;
+					loadQGendaURL();
+				};
+				
+				request.onerror = function(event) {
+					console.error('IndexedDB error:', event.target.errorCode);
+				};
 			}
+		
+		function getTransaction(storeName, mode) {
+			const transaction = db.transaction([storeName], mode);
+			return transaction.objectStore(storeName);
 		}
 		
-		function getRecords() {
+		async function saveQGendaURL(url) {
+			const store = getTransaction(storeName, 'readwrite');
+			store.put({ id: 'qgendaurl', value: url });
+		}
+		
+		async function loadQGendaURL() {
+			const store = getTransaction(storeName, 'readonly');
+			const request = store.get('qgendaurl');
+			request.onsuccess = function(event) {
+				const result = event.target.result;
+				if (result) {
+					document.getElementById('qgendaurl').value = result.value;
+				}
+			};
+		}
+		
+		async function saveRecord(record) {
+			const store = getTransaction(storeName, 'readwrite');
+			store.put(record);
+		}
+		
+		async function getRecords() {
 			const startDate = new Date(document.getElementById('startDate').value).toLocaleString();
 			const endDate = new Date(document.getElementById('endDate').value).toLocaleString();
 			
-			const records = getLocalStorageRecords();
-			const filteredRecords = records.filter(record => {
-												   return record.clockInTime &&
-												   record.clockOutTime &&
-												   new Date(record.clockInTime) >= new Date(startDate) &&
-												   new Date(record.clockOutTime) <= new Date(endDate);
-												   });
-												   
-												   if (filteredRecords.length === 0) {
-													   alert('No data exists for the selected time period.');
-													   return;
-												   }
-												   
-												   const csvContent = generateCSV(filteredRecords);
-												   downloadCSV(csvContent, `records_${formatDate(startDate)}_${formatDate(endDate)}.csv`);
+			const store = getTransaction(storeName, 'readonly');
+			const request = store.getAll();
+			request.onsuccess = function(event) {
+				const records = event.target.result;
+				const filteredRecords = records.filter(record => {
+													   return record.clockInTime &&
+													   record.clockOutTime &&
+													   new Date(record.clockInTime) >= new Date(startDate) &&
+													   new Date(record.clockOutTime) <= new Date(endDate);
+													   });
+													   
+													   if (filteredRecords.length === 0) {
+														   alert('No data exists for the selected time period.');
+														   return;
+													   }
+													   
+													   const csvContent = generateCSV(filteredRecords);
+													   downloadCSV(csvContent, `records_${formatDate(startDate)}_${formatDate(endDate)}.csv`);
+			};
 		}
 		
 		function generateCSV(records) {
@@ -270,23 +184,108 @@
 												  getRecords();
 												  }
 												  
-												  function clearLocalStorage() {
-												  localStorage.removeItem('records');
-												  alert('Local storage cleared.');
+												  function clearIndexedDB() {
+												  const request = indexedDB.deleteDatabase(dbName);
+												  request.onsuccess = function() {
+												  alert('IndexedDB cleared.');
+												  initDB();
+												  };
+												  request.onerror = function(event) {
+												  console.error('IndexedDB clear error:', event.target.errorCode);
+												  };
 												  }
 												  
-												  window.onload = initializeDateTimeInputs;
+												  async function clockIn() {
+												  const assignment = document.getElementById('assignmentInput').value;
+												  const dateTime = document.getElementById('dateTimeInput').value;
 												  
-												  // Service Worker registration
-												  if ('serviceWorker' in navigator) {
-												  window.addEventListener('load', function() {
-																		  navigator.serviceWorker.register('./service-worker.js').then(function(registration) {
-																																	   console.log('ServiceWorker registration successful with scope: ', registration.scope);
-																																	   }).catch(function(error) {
-																																				console.log('ServiceWorker registration failed: ', error);
-																																				});
-																		  });
+												  if (assignment && dateTime) {
+												  await saveRecord({
+																   clockInTime: new Date(dateTime).toLocaleString(),
+																   assignment: assignment,
+																   clockOutTime: null,
+																   });
+												  
+												  
+												  document.getElementById('clockInButton').disabled = true;
+												  document.getElementById('clockOutButton').disabled = false;
+												  } else {
+												  alert('Please enter your assignment and select a date/time.');
 												  }
+												  }
+												  
+												  async function clockOut() {
+												  const dateTime = document.getElementById('dateTimeInput').value;
+												  
+												  if (dateTime) {
+												  const store = getTransaction(storeName, 'readwrite');
+												  const request = store.openCursor(null, 'prev');
+												  request.onsuccess = async function(event) {
+												  const cursor = event.target.result;
+												  if (cursor) {
+												  if (cursor.value.clockOutTime === null) {
+												  cursor.update({
+																...cursor.value,
+																clockOutTime: new Date(dateTime).toLocaleString()
+																});
+												  
+												  
+												  document.getElementById('clockInButton').disabled = false;
+												  document.getElementById('clockOutButton').disabled = true;
+												  } else {
+												  alert('No matching clock-in record found.');
+												  }
+												  } else {
+												  alert('No clock-in record found.');
+												  }
+												  };
+												  request.onerror = function(event) {
+												  console.error('Cursor error:', event.target.errorCode);
+												  };
+												  } else {
+												  alert('Please select a date/time.');
+												  }
+												  }
+												  
+												  async function displayTodaysAssignment() {
+												  const url = document.getElementById('qgendaurl').value;
+												  const calendarData = await fetchCalendar(url);
+												  
+												  if (calendarData) {
+												  const events = parseICalendar(calendarData);
+												  const todayEvents = events.filter(event => isToday(new Date(event.start)));
+												  if (todayEvents.length > 0) {
+												  document.getElementById('assignmentInput').value = todayEvents[0].summary;
+												  }
+												  }
+												  }
+												  
+												  async function fetchCalendar(url) {
+												  try {
+												  const response = await fetch(url);
+												  if (response.ok) {
+												  return await response.text();
+												  } else {
+												  console.error('Error fetching calendar:', response.statusText);
+												  }
+												  } catch (error) {
+												  console.error('Fetch error:', error);
+												  }
+												  }
+												  
+												  function parseICalendar(data) {
+												  // Implement iCalendar parsing logic here
+												  return [];
+												  }
+												  
+												  function isToday(date) {
+												  const today = new Date();
+												  return date.getFullYear() === today.getFullYear() &&
+												  date.getMonth() === today.getMonth() &&
+												  date.getDate() === today.getDate();
+												  }
+												  
+												  initDB();
 												  </script>
 	</body>
 </html>
