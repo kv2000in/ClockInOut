@@ -5,7 +5,7 @@ const urlsToCache = [
 					 './manifest.json',
 					 './icons/icon-192x192.webp',
 					 './icons/icon-512x512.webp',
-					 '.service-worker.js'
+					 './service-worker.js'
 					 ];
 
 self.addEventListener('install', (event) => {
