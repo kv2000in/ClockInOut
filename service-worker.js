@@ -4,7 +4,7 @@ const urlsToCache = [
 					 './index.html',
 					 './manifest.json',
 					 './icons/icon-192x192.webp',
-					 './icons/icon-512x512.webp'
+					 './icons/icon-512x512.webp',
 					 '.service-worker.js'
 					 ];
 
