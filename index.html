@@ -43,7 +43,8 @@
 									<button onclick="getRecords()">Get Records</button>
 									<button onclick="getLastWeekRecords()">Last Week</button>
 									<button onclick="getLastMonthRecords()">Last Month</button>
-									</div>
+									<button onclick="clearLocalStorage()">Clear Local Storage</button>
+		</div>
 		
 		<script>
 			let timerInterval;
@@ -237,6 +238,12 @@
 																																			 console.log('Service Worker registration failed:', err);
 																																			 });
 																				 });
+														 }
+														 
+														 
+														 function clearLocalStorage() {
+														 localStorage.removeItem('records');
+														 alert('Local storage cleared.');
 														 }
 														 </script>
 	</body>
