@@ -12,6 +12,7 @@
 		2AC52F592C783F9800D1DBE7 /* service-worker.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "service-worker.js"; sourceTree = "<group>"; };
 		2AC52F5A2C783FC700D1DBE7 /* manifest.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = manifest.json; sourceTree = "<group>"; };
 		2AC52F5B2C78400100D1DBE7 /* icon-512x512.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "icon-512x512.png"; path = "icons/icon-512x512.png"; sourceTree = "<group>"; };
+		2AC52F5C2C7A78AD00D1DBE7 /* icon-192x192.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "icon-192x192.png"; path = "icons/icon-192x192.png"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -19,6 +20,7 @@
 			isa = PBXGroup;
 			children = (
 				2AC52F5B2C78400100D1DBE7 /* icon-512x512.png */,
+				2AC52F5C2C7A78AD00D1DBE7 /* icon-192x192.png */,
 				2AC52F5A2C783FC700D1DBE7 /* manifest.json */,
 				2AC52F592C783F9800D1DBE7 /* service-worker.js */,
 				2AC52F582C75A1D900D1DBE7 /* server.js */,
