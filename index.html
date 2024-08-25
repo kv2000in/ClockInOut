@@ -26,7 +26,7 @@
 	<body>
 		<div class="container">
 			<h1>Clock In/Out</h1>
-			<input type="text" id="qgendaurl" placeholder="Enter Qgenda Calendar URL" onupdate='handleURLupdate()'>
+			<input type="text" id="qgendaurl" placeholder="Enter Qgenda Calendar URL">
 				<input type="text" id="assignmentInput" placeholder="Enter your assignment">
 					<input type="datetime-local" id="dateTimeInput">
 						<button id="clockInButton" onclick="clockIn()">Clock In</button>
@@ -266,15 +266,13 @@
 												  const today = new Date();
 												  const formattedToday = formatQDate(today);
 												  
+												  try {
 												  // Check if today's assignment is already in the IndexedDB
-												  const store = getTransaction(storeName, 'readonly');
-												  const request = store.get(formattedToday);
+												  const todayAssignment = await getAssignmentFromDB(formattedToday);
 												  
-												  request.onsuccess = async function(event) {
-												  const result = event.target.result;
-												  if (result) {
+												  if (todayAssignment) {
 												  // Assignment for today exists in IndexedDB
-												  document.getElementById('assignmentInput').value = result.assignment;
+												  document.getElementById('assignmentInput').value = todayAssignment.assignment;
 												  } else {
 												  // Assignment for today does not exist, fetch the calendar
 												  const url = document.getElementById('qgendaurl').value;
@@ -285,53 +283,67 @@
 												  const events = parseICalendar(calendarData);
 												  
 												  // Process and store events in IndexedDB
-												  events.forEach(event => {
-																 const eventDate = formatQDate(new Date(parseCustomDate(event.details.start.replace(/\r$/, ''))));
-																 if (!store.get(eventDate).onsuccess) {
-																 storeAssignmentInDB(eventDate, event.details.summary);
-																 } else {
-																 updateAssignmentInDB(eventDate, event.details.summary);
-																 }
-																 });
+												  for (const event of events) {
+												  const eventDate = formatQDate(new Date(parseCustomDate(event.details.start.replace(/\r$/, ''))));
+												  await storeOrUpdateAssignmentInDB(eventDate, event.details.summary);
+												  }
 												  
 												  // Check again if today's assignment is now stored
-												  const todayAssignmentRequest = store.get(formattedToday);
-												  todayAssignmentRequest.onsuccess = function(event) {
-												  const todayResult = event.target.result;
-												  if (todayResult) {
-												  document.getElementById('assignmentInput').value = todayResult.assignment;
-												  }
-												  };
+												  const todayAssignmentAfterUpdate = await getAssignmentFromDB(formattedToday);
+												  if (todayAssignmentAfterUpdate) {
+												  document.getElementById('assignmentInput').value = todayAssignmentAfterUpdate.assignment;
 												  }
 												  }
 												  }
-												  };
 												  }
-												  
-												  // Function to store new assignment in IndexedDB
-												  function storeAssignmentInDB(date, summary) {
-												  const store = getTransaction(storeName, 'readwrite');
-												  store.put({ id: date, date: date, assignment: summary });
+												  } catch (error) {
+												  console.error('Error displaying today\'s assignment:', error);
+												  }
 												  }
 												  
-												  // Function to update existing assignment in IndexedDB
-												  function updateAssignmentInDB(date, summary) {
-												  const store = getTransaction(storeName, 'readwrite');
-												  const request = store.get(date);
-												  
-												  request.onsuccess = function(event) {
-												  const result = event.target.result;
-												  if (result) {
-												  // Concatenate new summary with existing assignment
-												  const updatedAssignment = `${result.assignment} ${summary}`;
-												  store.put({ id: date, date: date, assignment: updatedAssignment });
+												  // Function to get an assignment from IndexedDB
+												  function getAssignmentFromDB(date) {
+												  return new Promise((resolve, reject) => {
+																	 const store = getTransaction(storeName, 'readonly');
+																	 const request = store.get(date);
+																	 
+																	 request.onsuccess = function(event) {
+																	 resolve(event.target.result);
+																	 };
+																	 
+																	 request.onerror = function(event) {
+																	 reject(event.target.error);
+																	 };
+																	 });
 												  }
-												  };
+												  
+												  // Function to store or update assignment in IndexedDB
+												  function storeOrUpdateAssignmentInDB(date, summary) {
+												  return new Promise((resolve, reject) => {
+																	 const store = getTransaction(storeName, 'readwrite');
+																	 const request = store.get(date);
+																	 
+																	 request.onsuccess = function(event) {
+																	 const result = event.target.result;
+																	 if (result) {
+																	 // Concatenate new summary with existing assignment
+																	 const updatedAssignment = `${result.assignment} ${summary}`;
+																	 store.put({ id: date, date: date, assignment: updatedAssignment });
+																	 } else {
+																	 // Store new assignment
+																	 store.put({ id: date, date: date, assignment: summary });
+																	 }
+																	 resolve();
+																	 };
+																	 
+																	 request.onerror = function(event) {
+																	 reject(event.target.error);
+																	 };
+																	 });
 												  }
 												  
-												  
+												  // Utility functions (unchanged)
 												  function parseCustomDate(dateString) {
-												  // Parse date string in the format 'YYYYMMDD'
 												  const year = dateString.slice(0, 4);
 												  const month = dateString.slice(4, 6) - 1; // Months are 0-indexed in JavaScript
 												  const day = dateString.slice(6, 8);
@@ -342,10 +354,6 @@
 												  function formatQDate(date) {
 												  return date.toISOString().split('T')[0];
 												  }
-												  
-
-												 
-												  
 												  
 												  function parseICalendar(data) {
 												  const events = [];
@@ -368,9 +376,7 @@
 												  }
 												  }
 												  }
-												  //console.log(events);
 												  return events;
-												  
 												  }
 												  
 												  async function fetchCalendar(url) {
@@ -385,6 +391,7 @@
 												  console.error('Fetch error:', error);
 												  }
 												  }
+
 												 
 												  
 												  function convertUrlPrefix(url) {
@@ -400,6 +407,13 @@
 												  }
 												  
 												  initDB();
+												  
+												  document.getElementById('qgendaurl').addEventListener('input', function(event) {
+																											   const inputValue = event.target.value;
+																											   if (inputValue) {
+																											   handleURLupdate(); // Trigger your function when the input field has a value
+																											   }
+																											   });
 												  //displayTodaysAssignment();
 												  
 												  window.onload = initializeDateTimeInputs;
