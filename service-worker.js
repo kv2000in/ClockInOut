@@ -104,6 +104,7 @@ if (url) {
 	const calendarData = await fetchCalendar(url);
 	
 	if (calendarData) {
+		
 		const events = parseICalendar(calendarData);
 		
 			// Process and store events in IndexedDB
@@ -171,4 +172,27 @@ function getAssignmentFromDB(date) {
 					   reject(event.target.error);
 					   };
 					   });
+	}
+function parseICalendar(data) {
+	const events = [];
+	const lines = data.split('\n');
+	let event = null;
+	
+	for (const line of lines) {
+		if (line.startsWith('BEGIN:VEVENT')) {
+			event = { details: {} };
+		} else if (line.startsWith('SUMMARY:')) {
+			event.details.summary = line.replace('SUMMARY:', '');
+		} else if (line.startsWith('DTSTART;VALUE=DATE:')) {
+			event.details.start = line.replace('DTSTART;VALUE=DATE:', '');
+		} else if (line.startsWith('DTEND;VALUE=DATE:')) {
+			event.details.end = line.replace('DTEND;VALUE=DATE:', '');
+		} else if (line.startsWith('END:VEVENT')) {
+			if (event) {
+				events.push(event);
+				event = null;
+			}
+		}
+	}
+	return events;
 	}
