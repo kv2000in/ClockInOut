@@ -46,6 +46,36 @@ self.addEventListener('activate', (event) => {
 									  );
 					  });
 
+
+const dbName = 'ClockInOutDB';
+const storeName = 'recordsStore';
+let db;
+
+function initDB() {
+	const request = indexedDB.open(dbName, 1);
+	
+	request.onupgradeneeded = function(event) {
+		db = event.target.result;
+		db.createObjectStore(storeName, { keyPath: 'id', autoIncrement: true });
+	};
+	
+	request.onsuccess = function(event) {
+		db = event.target.result;
+		loadQGendaURL();
+	};
+	
+	request.onerror = function(event) {
+		console.error('IndexedDB error:', event.target.errorCode);
+	};
+}
+
+function getTransaction(storeName, mode) {
+	const transaction = db.transaction([storeName], mode);
+	return transaction.objectStore(storeName);
+}
+
+initDB();
+
 self.addEventListener('message', function(event) {
 					  const message = event.data;
 					  
