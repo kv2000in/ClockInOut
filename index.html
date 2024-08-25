@@ -373,7 +373,18 @@
 												  
 												  }
 												  
-												  
+												  async function fetchCalendar(url) {
+												  try {
+												  const response = await fetch(url);
+												  if (response.ok) {
+												  return await response.text();
+												  } else {
+												  console.error('Error fetching calendar:', response.statusText);
+												  }
+												  } catch (error) {
+												  console.error('Fetch error:', error);
+												  }
+												  }
 												 
 												  
 												  function convertUrlPrefix(url) {
@@ -389,7 +400,7 @@
 												  }
 												  
 												  initDB();
-												  displayTodaysAssignment();
+												  //displayTodaysAssignment();
 												  
 												  window.onload = initializeDateTimeInputs;
 												  
