@@ -31,7 +31,7 @@ self.addEventListener('fetch', (event) => {
 					  });
 
 self.addEventListener('activate', (event) => {
-					  await loadQGendaURL();
+					  loadQGendaURL();
 					  bgcalendarfetch(myurl);
 					  const cacheWhitelist = [CACHE_NAME];
 					  
