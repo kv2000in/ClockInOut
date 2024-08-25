@@ -8,7 +8,7 @@ const urlsToCache = [
 					 './service-worker.js'
 					 ];
 
-const myurl = "/clock/qgenda/";
+let myurl = "/clock/qgenda/";
 self.addEventListener('install', (event) => {
 					  event.waitUntil(
 									  caches.open(CACHE_NAME)
