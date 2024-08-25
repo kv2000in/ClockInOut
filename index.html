@@ -95,9 +95,25 @@
 			const newurl = convertUrlPrefix(document.getElementById('qgendaurl').value);
 			document.getElementById('qgendaurl').value=newurl;
 			saveQGendaURL(newurl);
-			displayTodaysAssignment();
+			//tell the service worker to delete old calendar and fetch new calendar
+				// Send a message to the Service Worker
+				if (navigator.serviceWorker.controller) {
+					navigator.serviceWorker.controller.postMessage({ type: 'fetch-calendar', data: { url: 'https://example.com/ical' } });
+				}
+			
+			
+			//displayTodaysAssignment();
 			
 		}
+		
+		function handleUpdatedAssignment(mynewassignment){
+			
+			const mydate = document.getElementById('dateTimeInput').value;
+			const formattedToday = formatQDate(formatDateTime(mydate));
+			storeOrUpdateAssignmentInDB(formattedToday,mynewassignment);
+			
+		}
+		
 		function initializeDateTimeInputs() {
 			const now = new Date();
 			const localDateTime = formatDateTime(now);
@@ -275,27 +291,7 @@
 												  // Assignment for today exists in IndexedDB
 												  document.getElementById('assignmentInput').value = todayAssignment.assignment;
 												  } else {
-												  // Assignment for today does not exist, fetch the calendar
-												  const url = document.getElementById('qgendaurl').value;
-												  if (url) {
-												  const calendarData = await fetchCalendar(url);
-												  
-												  if (calendarData) {
-												  const events = parseICalendar(calendarData);
-												  
-												  // Process and store events in IndexedDB
-												  for (const event of events) {
-												  const eventDate = formatQDate(formatDateTime(new Date(parseCustomDate(event.details.start.replace(/\r$/, '')))));
-												  await storeOrUpdateAssignmentInDB(eventDate, event.details.summary);
-												  }
-												  
-												  // Check again if today's assignment is now stored
-												  const todayAssignmentAfterUpdate = await getAssignmentFromDB(formattedToday);
-												  if (todayAssignmentAfterUpdate) {
-												  document.getElementById('assignmentInput').value = todayAssignmentAfterUpdate.assignment;
-												  }
-												  }
-												  }
+												 //Assignment for the date not in Database
 												  }
 												  } catch (error) {
 												  console.error('Error displaying today\'s assignment:', error);
@@ -380,18 +376,7 @@
 												  return events;
 												  }
 												  
-												  async function fetchCalendar(url) {
-												  try {
-												  const response = await fetch(url);
-												  if (response.ok) {
-												  return await response.text();
-												  } else {
-												  console.error('Error fetching calendar:', response.statusText);
-												  }
-												  } catch (error) {
-												  console.error('Fetch error:', error);
-												  }
-												  }
+												 
 
 												 
 												  
@@ -414,6 +399,18 @@
 												  
 												  window.onload = initializeDateTimeInputs;
 												  
+												  document.getElementById('qgendaurl').addEventListener('blur', function() {
+																										const url = this.value;
+																										if (url) {
+																										handleURLupdate(url);
+																										}
+																										});
+												  document.getElementById('assignmentInput').addEventListener('blur', function() {
+																										const url = this.value;
+																										if (url) {
+																										handleUpdatedAssignment(url);
+																										}
+																										});
 												  // Service Worker registration
 												  if ('serviceWorker' in navigator) {
 												  window.addEventListener('load', function() {
