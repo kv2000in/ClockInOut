@@ -212,3 +212,11 @@ function formatDateTime(inputDateTime) {
 	const seconds = pad(date.getSeconds(), 2);
 	return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
 	}
+
+function parseCustomDate(dateString) {
+	const year = dateString.slice(0, 4);
+	const month = dateString.slice(4, 6) - 1; // Months are 0-indexed in JavaScript
+	const day = dateString.slice(6, 8);
+	
+	return new Date(year, month, day);
+	}
