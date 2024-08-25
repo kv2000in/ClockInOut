@@ -98,7 +98,7 @@
 			//tell the service worker to delete old calendar and fetch new calendar
 				// Send a message to the Service Worker
 				if (navigator.serviceWorker.controller) {
-					navigator.serviceWorker.controller.postMessage({ type: 'fetch-calendar', data: { url: 'https://example.com/ical' } });
+					navigator.serviceWorker.controller.postMessage({ type: 'fetch-calendar', data: { url: newurl } });
 				}
 			
 			

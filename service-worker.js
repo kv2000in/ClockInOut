@@ -8,6 +8,7 @@ const urlsToCache = [
 					 './service-worker.js'
 					 ];
 
+const myurl;
 self.addEventListener('install', (event) => {
 					  event.waitUntil(
 									  caches.open(CACHE_NAME)
@@ -30,7 +31,8 @@ self.addEventListener('fetch', (event) => {
 					  });
 
 self.addEventListener('activate', (event) => {
-					  bgcalendarfetch();
+					  await loadQGendaURL();
+					  bgcalendarfetch(myurl);
 					  const cacheWhitelist = [CACHE_NAME];
 					  
 					  event.waitUntil(
@@ -81,7 +83,7 @@ self.addEventListener('message', function(event) {
 					  
 					  if (message.type === 'fetch-calendar') {
 					  //fetchCalendarInBackground(message.data.url);
-					  bgcalendarfetch();
+					  bgcalendarfetch(message.data.url);
 					  }
 					  });
 
@@ -91,13 +93,13 @@ async function loadQGendaURL() {
 	request.onsuccess = function(event) {
 		const result = event.target.result;
 		if (result) {
-			return result.value;
+			myurl= result.value;
 		}
 	};
 }
 
-async function bgcalendarfetch () {     
-	const url = loadQGendaURL();
+async function bgcalendarfetch (url) {     
+	
 if (url) {
 	const calendarData = await fetchCalendar(url);
 	
