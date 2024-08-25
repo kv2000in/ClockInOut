@@ -94,6 +94,7 @@
 		function handleURLupdate(){
 			const newurl = convertUrlPrefix(document.getElementById('qgendaurl').value);
 			document.getElementById('qgendaurl').value=newurl;
+			saveQGendaURL(newurl);
 			displayTodaysAssignment();
 			
 		}
@@ -263,8 +264,8 @@
 												  }
 												  
 												  async function displayTodaysAssignment() {
-												  const today = new Date();
-												  const formattedToday = formatQDate(today);
+												  const mydate = document.getElementById('dateTimeInput').value;
+												  const formattedToday = formatQDate(formatDateTime(mydate));
 												  
 												  try {
 												  // Check if today's assignment is already in the IndexedDB
@@ -284,7 +285,7 @@
 												  
 												  // Process and store events in IndexedDB
 												  for (const event of events) {
-												  const eventDate = formatQDate(new Date(parseCustomDate(event.details.start.replace(/\r$/, ''))));
+												  const eventDate = formatQDate(formatDateTime(new Date(parseCustomDate(event.details.start.replace(/\r$/, '')))));
 												  await storeOrUpdateAssignmentInDB(eventDate, event.details.summary);
 												  }
 												  
@@ -352,7 +353,7 @@
 												  }
 												  
 												  function formatQDate(date) {
-												  return date.toISOString().split('T')[0];
+												  return date.split('T')[0];
 												  }
 												  
 												  function parseICalendar(data) {
