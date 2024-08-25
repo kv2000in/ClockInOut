@@ -196,3 +196,7 @@ function parseICalendar(data) {
 	}
 	return events;
 	}
+
+function formatQDate(date) {
+	return date.split('T')[0];
+	}
