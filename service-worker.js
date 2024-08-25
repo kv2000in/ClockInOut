@@ -66,7 +66,7 @@ async function loadQGendaURL() {
 	};
 }
 
-async function bgcalendarfetch {     
+async function bgcalendarfetch () {     
 	const url = loadQGendaURL();
 if (url) {
 	const calendarData = await fetchCalendar(url);
