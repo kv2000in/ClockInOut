@@ -411,6 +411,12 @@
 																										handleUpdatedAssignment(url);
 																										}
 																										});
+												  document.getElementById('dateTimeInput').addEventListener('blur', function() {
+																											  const url = this.value;
+																											  if (url) {
+																											displayTodaysAssignment();
+																											  }
+																											  });
 												  // Service Worker registration
 												  if ('serviceWorker' in navigator) {
 												  window.addEventListener('load', function() {
