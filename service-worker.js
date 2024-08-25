@@ -200,3 +200,15 @@ function parseICalendar(data) {
 function formatQDate(date) {
 	return date.split('T')[0];
 	}
+
+function formatDateTime(inputDateTime) {
+	const date = new Date(inputDateTime);
+	const pad = (num, size) => num.toString().padStart(size, '0');
+	const year = date.getFullYear();
+	const month = pad(date.getMonth() + 1, 2);
+	const day = pad(date.getDate(), 2);
+	const hours = pad(date.getHours(), 2);
+	const minutes = pad(date.getMinutes(), 2);
+	const seconds = pad(date.getSeconds(), 2);
+	return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+	}
