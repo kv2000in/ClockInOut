@@ -92,7 +92,8 @@
 		}
 		
 		function handleURLupdate(){
-			saveQGendaURL(document.getElementById('qgendaurl').value());
+			const newurl = convertUrlPrefix(document.getElementById('qgendaurl').value);
+			document.getElementById('qgendaurl').value=newurl;
 			displayTodaysAssignment();
 			
 		}
@@ -262,30 +263,89 @@
 												  }
 												  
 												  async function displayTodaysAssignment() {
+												  const today = new Date();
+												  const formattedToday = formatQDate(today);
+												  
+												  // Check if today's assignment is already in the IndexedDB
+												  const store = getTransaction(storeName, 'readonly');
+												  const request = store.get(formattedToday);
+												  
+												  request.onsuccess = async function(event) {
+												  const result = event.target.result;
+												  if (result) {
+												  // Assignment for today exists in IndexedDB
+												  document.getElementById('assignmentInput').value = result.assignment;
+												  } else {
+												  // Assignment for today does not exist, fetch the calendar
 												  const url = document.getElementById('qgendaurl').value;
+												  if (url) {
 												  const calendarData = await fetchCalendar(url);
 												  
 												  if (calendarData) {
 												  const events = parseICalendar(calendarData);
-												  const todayEvents = events.filter(event => isToday(new Date(event.start)));
-												  if (todayEvents.length > 0) {
-												  document.getElementById('assignmentInput').value = todayEvents[0].summary;
+												  
+												  // Process and store events in IndexedDB
+												  events.forEach(event => {
+																 const eventDate = formatQDate(new Date(parseCustomDate(event.details.start.replace(/\r$/, ''))));
+																 if (!store.get(eventDate).onsuccess) {
+																 storeAssignmentInDB(eventDate, event.details.summary);
+																 } else {
+																 updateAssignmentInDB(eventDate, event.details.summary);
+																 }
+																 });
+												  
+												  // Check again if today's assignment is now stored
+												  const todayAssignmentRequest = store.get(formattedToday);
+												  todayAssignmentRequest.onsuccess = function(event) {
+												  const todayResult = event.target.result;
+												  if (todayResult) {
+												  document.getElementById('assignmentInput').value = todayResult.assignment;
+												  }
+												  };
 												  }
 												  }
+												  }
+												  };
 												  }
 												  
-												  async function fetchCalendar(url) {
-												  try {
-												  const response = await fetch(url);
-												  if (response.ok) {
-												  return await response.text();
-												  } else {
-												  console.error('Error fetching calendar:', response.statusText);
+												  // Function to store new assignment in IndexedDB
+												  function storeAssignmentInDB(date, summary) {
+												  const store = getTransaction(storeName, 'readwrite');
+												  store.put({ id: date, date: date, assignment: summary });
 												  }
-												  } catch (error) {
-												  console.error('Fetch error:', error);
+												  
+												  // Function to update existing assignment in IndexedDB
+												  function updateAssignmentInDB(date, summary) {
+												  const store = getTransaction(storeName, 'readwrite');
+												  const request = store.get(date);
+												  
+												  request.onsuccess = function(event) {
+												  const result = event.target.result;
+												  if (result) {
+												  // Concatenate new summary with existing assignment
+												  const updatedAssignment = `${result.assignment} ${summary}`;
+												  store.put({ id: date, date: date, assignment: updatedAssignment });
 												  }
+												  };
 												  }
+												  
+												  
+												  function parseCustomDate(dateString) {
+												  // Parse date string in the format 'YYYYMMDD'
+												  const year = dateString.slice(0, 4);
+												  const month = dateString.slice(4, 6) - 1; // Months are 0-indexed in JavaScript
+												  const day = dateString.slice(6, 8);
+												  
+												  return new Date(year, month, day);
+												  }
+												  
+												  function formatQDate(date) {
+												  return date.toISOString().split('T')[0];
+												  }
+												  
+
+												 
+												  
 												  
 												  function parseICalendar(data) {
 												  const events = [];
@@ -297,10 +357,10 @@
 												  event = { details: {} };
 												  } else if (line.startsWith('SUMMARY:')) {
 												  event.details.summary = line.replace('SUMMARY:', '');
-												  } else if (line.startsWith('DTSTART:')) {
-												  event.details.start = line.replace('DTSTART:', '');
-												  } else if (line.startsWith('DTEND:')) {
-												  event.details.end = line.replace('DTEND:', '');
+												  } else if (line.startsWith('DTSTART;VALUE=DATE:')) {
+												  event.details.start = line.replace('DTSTART;VALUE=DATE:', '');
+												  } else if (line.startsWith('DTEND;VALUE=DATE:')) {
+												  event.details.end = line.replace('DTEND;VALUE=DATE:', '');
 												  } else if (line.startsWith('END:VEVENT')) {
 												  if (event) {
 												  events.push(event);
@@ -308,20 +368,28 @@
 												  }
 												  }
 												  }
-												  
+												  //console.log(events);
 												  return events;
 												  
 												  }
 												  
-												  function isToday(date) {
-												  const today = new Date();
-												  return date.getFullYear() === today.getFullYear() &&
-												  date.getMonth() === today.getMonth() &&
-												  date.getDate() === today.getDate();
+												  
+												 
+												  
+												  function convertUrlPrefix(url) {
+												  const oldPrefix = "https://app.qgenda.com/ical";
+												  const newPrefix = "/clock/qgenda/ical";
+												  
+												  // Replace the old prefix with the new prefix
+												  if (url.startsWith(oldPrefix)) {
+												  return url.replace(oldPrefix, newPrefix);
+												  } else {
+												  return url; // Return the original URL if it doesn't match the old prefix
+												  }
 												  }
 												  
 												  initDB();
-												  
+												  displayTodaysAssignment();
 												  
 												  window.onload = initializeDateTimeInputs;
 												  
