@@ -47,7 +47,7 @@
 			const clockstoreName = 'clockStore'; //Clock In and Out store
 			let db;
 			
-			function initDB() {
+			function initDB(callback) {
 				if (navigator.storage && navigator.storage.persist) {
 					navigator.storage.persist().then(function(isPersistent) {
 													 if (isPersistent) {
@@ -72,6 +72,10 @@
 					
 					if (!db.objectStoreNames.contains(calstoreName)) {
 						db.createObjectStore(calstoreName, { keyPath: 'id', autoIncrement: true });
+					} else {
+						//calendar store exists - let's get todays assignments.
+						displayTodaysAssignment();
+						
 					}
 					
 					navigator.serviceWorker.ready.then(function(registration) {
@@ -84,6 +88,8 @@
 					db = event.target.result;
 					loadQGendaURL();
 				};
+				
+				if (callback) callback();
 				
 				request.onerror = function(event) {
 					console.error('IndexedDB error:', event.target.errorCode);
@@ -121,16 +127,33 @@
 			const newurl = convertUrlPrefix(document.getElementById('qgendaurl').value);
 			document.getElementById('qgendaurl').value=newurl;
 			saveQGendaURL(newurl);
-			//tell the service worker to delete old calendar and fetch new calendar
+			
 				// Send a message to the Service Worker
 				if (navigator.serviceWorker.controller) {
 					navigator.serviceWorker.controller.postMessage({ type: 'fetch-calendar', data: { url: newurl } });
 				}
+				
+			
+				
+				
 			
 			//now we should have fetched the calendar or at least trying to fetch the calendar. so display the selected date assignment
-			displayTodaysAssignment();
+			//displayTodaysAssignment(); //handled in sw once calendar data is available.
 			
 		}
+		navigator.serviceWorker.addEventListener('message', function(event) {
+												 if (event.data.type === 'fetch-complete') {
+												 if (event.data.status === 'success') {
+												 console.log('Fetch complete, data is ready');
+												 // Handle the successful fetch
+												 displayTodaysAssignment();
+												 } else if (event.data.status === 'error') {
+												 console.error('Fetch failed:', event.data.error);
+												 // Handle the error
+												 }
+												 }
+												 });
+		
 		
 		function handleUpdatedAssignment(mynewassignment){
 			
@@ -140,14 +163,15 @@
 			
 		}
 		
-		function initializeDateTimeInputs() {
+		function initializeDateTimeInputs(callback) {
 			const now = new Date();
 			const localDateTime = formatDateTime(now);
 			document.getElementById('dateTimeInput').value = localDateTime;
 			document.getElementById('startDate').value = localDateTime;
 			document.getElementById('endDate').value = localDateTime;
-			//check is assignment exists in the DB
-			displayTodaysAssignment();
+			
+				// Check if assignment exists in the DB
+				if (callback) callback();
 		}
 		
 		async function getRecords() {
@@ -421,12 +445,35 @@
 												  }
 												  }
 												  
-												  initDB();
+												  function checkAndDisplayAssignment() {
+												  if (db.objectStoreNames.contains(calstoreName)) {
+												  displayTodaysAssignment();
+												  }
+												  }
 												  
 												  
-												  //displayTodaysAssignment();
 												  
-												  window.onload = initializeDateTimeInputs;
+												  
+												  
+												
+												  
+												  function checkAndDisplayAssignment() {
+												  if (db.objectStoreNames.contains(calstoreName)) {
+												  displayTodaysAssignment();
+												  }
+												  }
+												  
+												  // Ensure proper sequencing
+												  window.onload = function() {
+												  initDB(function() {
+														 initializeDateTimeInputs(function() {
+																				  checkAndDisplayAssignment();
+																				  });
+														 });
+												  };
+												  
+												  
+												  
 												  
 												  document.getElementById('qgendaurl').addEventListener('blur', function() {
 																										const url = this.value;

@@ -93,7 +93,28 @@ self.addEventListener('message', function(event) {
 					  //fetchCalendarInBackground(message.data.url);
 					  bgcalendarfetch(message.data.url);
 					  console.log ("Fetching Cal as requested by main");
+					  
 					  }
+					  
+					  if (event.data.type === 'fetch-calendar') {
+					  const url = event.data.data.url;
+					  
+					  fetch(url)
+					  .then(response => response.text())
+					  .then(data => {
+							// Process the data and store it as needed
+							bgcalendarfetch(data);
+							
+							// Notify the main thread that the data is ready
+							event.ports[0].postMessage({ type: 'fetch-complete', status: 'success' });
+							})
+					  .catch(error => {
+							 // Notify the main thread about the error
+							 event.ports[0].postMessage({ type: 'fetch-complete', status: 'error', error: error.message });
+							 });
+					  }
+					  
+					  
 					  if (event.data.type === 'database-ready') {
 					  // Proceed with operations, knowing the database setup is complete
 					  initDB();
@@ -113,10 +134,9 @@ async function loadQGendaURL() {
 	};
 }
 
-async function bgcalendarfetch (url) {     
+function bgcalendarfetch (calendarData) {     
 	
-if (url) {
-	const calendarData = await fetchCalendar(url);
+
 	
 	if (calendarData) {
 		
@@ -125,12 +145,12 @@ if (url) {
 			// Process and store events in IndexedDB
 		for (const event of events) {
 			const eventDate = formatQDate(formatDateTime(new Date(parseCustomDate(event.details.start.replace(/\r$/, '')))));
-			await storeAssignmentInDB(eventDate, event.details.summary);
+			storeAssignmentInDB(eventDate, event.details.summary);
 		}
 		
 		
 	}
-}
+
 
 }
 
