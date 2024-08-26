@@ -88,17 +88,11 @@ function getTransaction(storeName, mode) {
 
 self.addEventListener('message', function(event) {
 					  const message = event.data;
-					  
-					  if (message.type === 'fetch-calendar') {
-					  //fetchCalendarInBackground(message.data.url);
-					  bgcalendarfetch(message.data.url);
-					  console.log ("Fetching Cal as requested by main");
-					  
-					  }
+
 					  
 					  if (event.data.type === 'fetch-calendar') {
 					  const url = event.data.data.url;
-					  
+					  console.log ("Fetching Cal as requested by main");
 					  fetch(url)
 					  .then(response => response.text())
 					  .then(data => {
