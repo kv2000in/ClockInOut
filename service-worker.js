@@ -110,7 +110,7 @@ if (url) {
 			// Process and store events in IndexedDB
 		for (const event of events) {
 			const eventDate = formatQDate(formatDateTime(new Date(parseCustomDate(event.details.start.replace(/\r$/, '')))));
-			await storeOrUpdateAssignmentInDB(eventDate, event.details.summary);
+			await storeAssignmentInDB(eventDate, event.details.summary);
 		}
 		
 		
@@ -132,8 +132,35 @@ async function fetchCalendar(url) {
 	}
 }
 
-	// Function to store or update assignment in IndexedDB
-function storeOrUpdateAssignmentInDB(date, summary) {
+	// Function to store  assignment in IndexedDB
+function storeAssignmentInDB(date, summary) {
+	return new Promise((resolve, reject) => {
+					   const store = getTransaction(storeName, 'readwrite');
+					   const request = store.get(date);
+					   
+					   request.onsuccess = function(event) {
+					   const result = event.target.result;
+					   if (result) {
+					   // There already exists an entry. Leave it untouched.
+					   
+					   } else {
+					   // Store new assignment
+					   store.put({ id: date, date: date, assignment: summary });
+					   }
+					   resolve();
+					   };
+					   
+					   request.onerror = function(event) {
+					   reject(event.target.error);
+					   };
+					   });
+					  
+					  
+}
+
+
+	// Function to update assignment in IndexedDB
+function updateAssignmentInDB(date, summary) {
 	return new Promise((resolve, reject) => {
 					   const store = getTransaction(storeName, 'readwrite');
 					   const request = store.get(date);
@@ -156,7 +183,6 @@ function storeOrUpdateAssignmentInDB(date, summary) {
 					   };
 					   });
 }
-
 
 	// Function to get an assignment from IndexedDB
 function getAssignmentFromDB(date) {

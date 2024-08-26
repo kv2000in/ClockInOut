@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		2AC52F572C75A1B300D1DBE7 /* index.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = index.html; sourceTree = "<group>"; };
+		2AC52F572C75A1B300D1DBE7 /* index.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = index.html; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.html; };
 		2AC52F582C75A1D900D1DBE7 /* server.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = server.js; sourceTree = "<group>"; };
 		2AC52F592C783F9800D1DBE7 /* service-worker.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "service-worker.js"; sourceTree = "<group>"; };
 		2AC52F5A2C783FC700D1DBE7 /* manifest.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = manifest.json; sourceTree = "<group>"; };

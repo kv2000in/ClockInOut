@@ -38,7 +38,7 @@
 								<button onclick="getRecords()">Get Records</button>
 								<button onclick="getLastWeekRecords()">Last Week</button>
 								<button onclick="getLastMonthRecords()">Last Month</button>
-								<button onclick="clearIndexedDB()">Clear IndexedDB</button>
+								<!-- <button onclick="clearIndexedDB()">Clear IndexedDB</button> -->
 								</div>
 		
 		<script>
@@ -47,6 +47,19 @@
 			let db;
 			
 			function initDB() {
+				if (navigator.storage && navigator.storage.persist) {
+					navigator.storage.persist().then(function(isPersistent) {
+													 if (isPersistent) {
+													 console.log("Storage is set to persistent.");
+													 } else {
+													 console.log("Storage is not persistent.");
+													 }
+													 }).catch(function(error) {
+															  console.error("Error requesting persistent storage:", error);
+															  });
+				} else {
+					console.log("Persistent storage is not supported by this browser.");
+				}
 				const request = indexedDB.open(dbName, 1);
 				
 				request.onupgradeneeded = function(event) {
@@ -405,18 +418,35 @@
 																										handleURLupdate(url);
 																										}
 																										});
-												  document.getElementById('assignmentInput').addEventListener('blur', function() {
-																										const url = this.value;
-																										if (url) {
-																										handleUpdatedAssignment(url);
-																										}
-																										});
-												  document.getElementById('dateTimeInput').addEventListener('blur', function() {
+												  
+												  
+												  
+												  function debounce(func, delay) {
+												  let timeout;
+												  return function(...args) {
+												  clearTimeout(timeout);
+												  timeout = setTimeout(() => func.apply(this, args), delay);
+												  };
+												  }
+												  
+											document.getElementById('assignmentInput').addEventListener('input', debounce(function() {
+																														  const url = this.value;
+																														  if (url) {
+																														  handleUpdatedAssignment(url);
+																														  }, 500)); // Adjust the delay as needed
+												  document.getElementById('dateTimeInput').addEventListener('change', function() {
 																											  const url = this.value;
 																											  if (url) {
 																											displayTodaysAssignment();
 																											  }
 																											  });
+												  function handleDateUpdate(event) {
+												  const selectedDate = event.target.value;
+												  if (selectedDate) {
+												  // Your logic here
+												  console.log('User selected date:', selectedDate);
+												  }
+												  }
 												  // Service Worker registration
 												  if ('serviceWorker' in navigator) {
 												  window.addEventListener('load', function() {
