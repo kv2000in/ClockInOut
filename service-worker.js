@@ -8,7 +8,7 @@ const urlsToCache = [
 					 './service-worker.js'
 					 ];
 
-let myurl = "/clock/qgenda/";
+
 self.addEventListener('install', (event) => {
 					  event.waitUntil(
 									  caches.open(CACHE_NAME)
@@ -32,7 +32,7 @@ self.addEventListener('fetch', (event) => {
 
 self.addEventListener('activate', (event) => {
 					  loadQGendaURL();
-					  bgcalendarfetch(myurl);
+					  
 					  const cacheWhitelist = [CACHE_NAME];
 					  
 					  event.waitUntil(
@@ -93,7 +93,8 @@ async function loadQGendaURL() {
 	request.onsuccess = function(event) {
 		const result = event.target.result;
 		if (result) {
-			myurl= result.value;
+			//fetch calendar if there is a stored value of calendar url
+			bgcalendarfetch(result.value);
 		}
 	};
 }
