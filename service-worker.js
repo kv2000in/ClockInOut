@@ -92,10 +92,12 @@ self.addEventListener('message', function(event) {
 					  if (message.type === 'fetch-calendar') {
 					  //fetchCalendarInBackground(message.data.url);
 					  bgcalendarfetch(message.data.url);
+					  console.log ("Fetching Cal as requested by main");
 					  }
 					  if (event.data.type === 'database-ready') {
 					  // Proceed with operations, knowing the database setup is complete
 					  initDB();
+					  console.log ("DB ready as reported by main");
 					  }
 					  });
 

@@ -127,8 +127,8 @@
 					navigator.serviceWorker.controller.postMessage({ type: 'fetch-calendar', data: { url: newurl } });
 				}
 			
-			
-			//displayTodaysAssignment();
+			//now we should have fetched the calendar or at least trying to fetch the calendar. so display the selected date assignment
+			displayTodaysAssignment();
 			
 		}
 		
@@ -136,7 +136,7 @@
 			
 			const mydate = document.getElementById('dateTimeInput').value;
 			const formattedToday = formatQDate(formatDateTime(mydate));
-			storeOrUpdateAssignmentInDB(formattedToday,mynewassignment);
+			updateAssignmentInDB(formattedToday,mynewassignment);
 			
 		}
 		
@@ -146,6 +146,8 @@
 			document.getElementById('dateTimeInput').value = localDateTime;
 			document.getElementById('startDate').value = localDateTime;
 			document.getElementById('endDate').value = localDateTime;
+			//check is assignment exists in the DB
+			displayTodaysAssignment();
 		}
 		
 		async function getRecords() {
@@ -340,8 +342,10 @@
 																	 });
 												  }
 												  
-												  // Function to store or update assignment in IndexedDB
-												  function storeOrUpdateAssignmentInDB(date, summary) {
+												  
+												  
+												  // Function to update assignment in IndexedDB
+												  function updateAssignmentInDB(date, summary) {
 												  return new Promise((resolve, reject) => {
 																	 const store = getTransaction(calstoreName, 'readwrite');
 																	 const request = store.get(date);
@@ -349,9 +353,8 @@
 																	 request.onsuccess = function(event) {
 																	 const result = event.target.result;
 																	 if (result) {
-																	 // Concatenate new summary with existing assignment
-																	 const updatedAssignment = `${result.assignment} ${summary}`;
-																	 store.put({ id: date, date: date, assignment: updatedAssignment });
+																	 // Replace the existing assignment with the new summary
+																	 store.put({ id: date, date: date, assignment: summary });
 																	 } else {
 																	 // Store new assignment
 																	 store.put({ id: date, date: date, assignment: summary });
