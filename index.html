@@ -86,10 +86,11 @@
 				
 				request.onsuccess = function(event) {
 					db = event.target.result;
+					if (callback) callback();
 					loadQGendaURL();
 				};
 				
-				if (callback) callback();
+				
 				
 				request.onerror = function(event) {
 					console.error('IndexedDB error:', event.target.errorCode);
@@ -458,8 +459,10 @@
 												
 												  
 												  function checkAndDisplayAssignment() {
-												  if (db.objectStoreNames.contains(calstoreName)) {
+												  if (db && db.objectStoreNames.contains(calstoreName)) {
 												  displayTodaysAssignment();
+												  } else {
+												  console.error('Database not initialized or calstoreName does not exist.');
 												  }
 												  }
 												  
