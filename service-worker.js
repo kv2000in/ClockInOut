@@ -88,11 +88,10 @@ function getTransaction(storeName, mode) {
 
 self.addEventListener('message', function(event) {
 					  const message = event.data;
-
 					  
-					  if (event.data.type === 'fetch-calendar') {
-					  const url = event.data.data.url;
-					  console.log ("Fetching Cal as requested by main");
+					  if (message.type === 'fetch-calendar') {
+					  const url = message.data.url;
+					  console.log("Fetching Cal as requested by main");
 					  fetch(url)
 					  .then(response => response.text())
 					  .then(data => {
@@ -100,21 +99,29 @@ self.addEventListener('message', function(event) {
 							bgcalendarfetch(data);
 							
 							// Notify the main thread that the data is ready
+							if (event.ports && event.ports.length > 0) {
 							event.ports[0].postMessage({ type: 'fetch-complete', status: 'success' });
+							} else {
+							console.warn('No ports available to send message.');
+							}
 							})
 					  .catch(error => {
 							 // Notify the main thread about the error
+							 if (event.ports && event.ports.length > 0) {
 							 event.ports[0].postMessage({ type: 'fetch-complete', status: 'error', error: error.message });
+							 } else {
+							 console.warn('No ports available to send message.');
+							 }
 							 });
 					  }
 					  
-					  
-					  if (event.data.type === 'database-ready') {
+					  if (message.type === 'database-ready') {
 					  // Proceed with operations, knowing the database setup is complete
 					  initDB();
-					  console.log ("DB ready as reported by main");
+					  console.log("DB ready as reported by main");
 					  }
 					  });
+
 
 async function loadQGendaURL() {
 	const store = getTransaction(calstoreName, 'readonly');

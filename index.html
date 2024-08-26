@@ -129,25 +129,29 @@
 			document.getElementById('qgendaurl').value=newurl;
 			saveQGendaURL(newurl);
 
-				if ('serviceWorker' in navigator) {
-					navigator.serviceWorker.ready.then(function(registration) {
-													   registration.active.postMessage({ type: 'fetch-calendar', data: { url: newurl } });
-													   
-													   // Listen for messages from the Service Worker
-													   navigator.serviceWorker.addEventListener('message', function(event) {
-																								if (event.data.type === 'fetch-complete') {
-																								if (event.data.status === 'success') {
-																								console.log('Fetch complete, data is ready');
-																								// Handle the successful fetch
-																								displayTodaysAssignment();
-																								} else if (event.data.status === 'error') {
-																								console.error('Fetch failed:', event.data.error);
-																								// Handle the error
-																								}
-																								}
-																								});
-													   });
-				}
+			if ('serviceWorker' in navigator) {
+				navigator.serviceWorker.ready.then(function(registration) {
+												   // Send a message to the service worker
+												   registration.active.postMessage({ type: 'fetch-calendar', data: { url: newurl } });
+												   }).catch(error => {
+															console.error('Service Worker registration error:', error);
+															});
+															
+																// Listen for messages from the service worker
+																navigator.serviceWorker.addEventListener('message', function(event) {
+																										 if (event.data.type === 'fetch-complete') {
+																										 if (event.data.status === 'success') {
+																										 console.log('Fetch complete, data is ready');
+																										 // Handle the successful fetch
+																										 displayTodaysAssignment();
+																										 } else if (event.data.status === 'error') {
+																										 console.error('Fetch failed:', event.data.error);
+																										 // Handle the error
+																										 }
+																										 }
+																										 });
+			}
+
 			
 			
 			
