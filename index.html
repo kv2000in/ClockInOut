@@ -131,7 +131,6 @@
 
 			if ('serviceWorker' in navigator) {
 				navigator.serviceWorker.ready.then(function(registration) {
-												   // Send a message to the service worker
 												   registration.active.postMessage({ type: 'fetch-calendar', data: { url: newurl } });
 												   }).catch(error => {
 															console.error('Service Worker registration error:', error);
@@ -151,6 +150,7 @@
 																										 }
 																										 });
 			}
+
 
 			
 			

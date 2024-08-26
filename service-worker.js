@@ -99,19 +99,19 @@ self.addEventListener('message', function(event) {
 							bgcalendarfetch(data);
 							
 							// Notify the main thread that the data is ready
-							if (event.ports && event.ports.length > 0) {
-							event.ports[0].postMessage({ type: 'fetch-complete', status: 'success' });
-							} else {
-							console.warn('No ports available to send message.');
-							}
+							self.clients.matchAll().then(clients => {
+														 clients.forEach(client => {
+																		 client.postMessage({ type: 'fetch-complete', status: 'success' });
+																		 });
+														 });
 							})
 					  .catch(error => {
 							 // Notify the main thread about the error
-							 if (event.ports && event.ports.length > 0) {
-							 event.ports[0].postMessage({ type: 'fetch-complete', status: 'error', error: error.message });
-							 } else {
-							 console.warn('No ports available to send message.');
-							 }
+							 self.clients.matchAll().then(clients => {
+														  clients.forEach(client => {
+																		  client.postMessage({ type: 'fetch-complete', status: 'error', error: error.message });
+																		  });
+														  });
 							 });
 					  }
 					  
@@ -121,6 +121,7 @@ self.addEventListener('message', function(event) {
 					  console.log("DB ready as reported by main");
 					  }
 					  });
+
 
 
 async function loadQGendaURL() {
