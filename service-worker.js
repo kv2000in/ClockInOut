@@ -50,7 +50,7 @@ self.addEventListener('activate', (event) => {
 
 
 const dbName = 'ClockInOutDB';
-const storeName = 'recordsStore';
+const calstoreName = 'calStore'; //calendar related items
 let db;
 
 function initDB() {
@@ -58,7 +58,7 @@ function initDB() {
 	
 	request.onupgradeneeded = function(event) {
 		db = event.target.result;
-		db.createObjectStore(storeName, { keyPath: 'id', autoIncrement: true });
+		db.createObjectStore(calstoreName, { keyPath: 'id', autoIncrement: true });
 	};
 	
 	request.onsuccess = function(event) {
@@ -88,7 +88,7 @@ self.addEventListener('message', function(event) {
 					  });
 
 async function loadQGendaURL() {
-	const store = getTransaction(storeName, 'readonly');
+	const store = getTransaction(calstoreName, 'readonly');
 	const request = store.get('qgendaurl');
 	request.onsuccess = function(event) {
 		const result = event.target.result;
@@ -136,7 +136,7 @@ async function fetchCalendar(url) {
 	// Function to store  assignment in IndexedDB
 function storeAssignmentInDB(date, summary) {
 	return new Promise((resolve, reject) => {
-					   const store = getTransaction(storeName, 'readwrite');
+					   const store = getTransaction(calstoreName, 'readwrite');
 					   const request = store.get(date);
 					   
 					   request.onsuccess = function(event) {
@@ -163,7 +163,7 @@ function storeAssignmentInDB(date, summary) {
 	// Function to update assignment in IndexedDB
 function updateAssignmentInDB(date, summary) {
 	return new Promise((resolve, reject) => {
-					   const store = getTransaction(storeName, 'readwrite');
+					   const store = getTransaction(calstoreName, 'readwrite');
 					   const request = store.get(date);
 					   
 					   request.onsuccess = function(event) {
@@ -188,7 +188,7 @@ function updateAssignmentInDB(date, summary) {
 	// Function to get an assignment from IndexedDB
 function getAssignmentFromDB(date) {
 	return new Promise((resolve, reject) => {
-					   const store = getTransaction(storeName, 'readonly');
+					   const store = getTransaction(calstoreName, 'readonly');
 					   const request = store.get(date);
 					   
 					   request.onsuccess = function(event) {

@@ -43,7 +43,8 @@
 		
 		<script>
 			const dbName = 'ClockInOutDB';
-			const storeName = 'recordsStore';
+			const calstoreName = 'calStore'; //calendar related items
+			const clockstoreName = 'clockStore'; //Clock In and Out store
 			let db;
 			
 			function initDB() {
@@ -64,7 +65,8 @@
 				
 				request.onupgradeneeded = function(event) {
 					db = event.target.result;
-					db.createObjectStore(storeName, { keyPath: 'id', autoIncrement: true });
+					db.createObjectStore(clockstoreName, { keyPath: 'id', autoIncrement: true });
+					
 				};
 				
 				request.onsuccess = function(event) {
@@ -83,12 +85,12 @@
 		}
 		
 		async function saveQGendaURL(url) {
-			const store = getTransaction(storeName, 'readwrite');
+			const store = getTransaction(calstoreName, 'readwrite');
 			store.put({ id: 'qgendaurl', value: url });
 		}
 		
 		async function loadQGendaURL() {
-			const store = getTransaction(storeName, 'readonly');
+			const store = getTransaction(calstoreName, 'readonly');
 			const request = store.get('qgendaurl');
 			request.onsuccess = function(event) {
 				const result = event.target.result;
@@ -100,7 +102,7 @@
 		
 		
 		async function saveRecord(record) {
-			const store = getTransaction(storeName, 'readwrite');
+			const store = getTransaction(clockstoreName, 'readwrite');
 			store.put(record);
 		}
 		
@@ -139,7 +141,7 @@
 			const startDate = new Date(document.getElementById('startDate').value).toLocaleString();
 			const endDate = new Date(document.getElementById('endDate').value).toLocaleString();
 			
-			const store = getTransaction(storeName, 'readonly');
+			const store = getTransaction(clockstoreName, 'readonly');
 			const request = store.getAll();
 			request.onsuccess = function(event) {
 				const records = event.target.result;
@@ -263,7 +265,7 @@
 												  const dateTime = document.getElementById('dateTimeInput').value;
 												  
 												  if (dateTime) {
-												  const store = getTransaction(storeName, 'readwrite');
+												  const store = getTransaction(clockstoreName, 'readwrite');
 												  const request = store.openCursor(null, 'prev');
 												  request.onsuccess = async function(event) {
 												  const cursor = event.target.result;
@@ -314,7 +316,7 @@
 												  // Function to get an assignment from IndexedDB
 												  function getAssignmentFromDB(date) {
 												  return new Promise((resolve, reject) => {
-																	 const store = getTransaction(storeName, 'readonly');
+																	 const store = getTransaction(calstoreName, 'readonly');
 																	 const request = store.get(date);
 																	 
 																	 request.onsuccess = function(event) {
@@ -330,7 +332,7 @@
 												  // Function to store or update assignment in IndexedDB
 												  function storeOrUpdateAssignmentInDB(date, summary) {
 												  return new Promise((resolve, reject) => {
-																	 const store = getTransaction(storeName, 'readwrite');
+																	 const store = getTransaction(calstoreName, 'readwrite');
 																	 const request = store.get(date);
 																	 
 																	 request.onsuccess = function(event) {
