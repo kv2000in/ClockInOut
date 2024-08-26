@@ -31,7 +31,7 @@ self.addEventListener('fetch', (event) => {
 					  });
 
 self.addEventListener('activate', (event) => {
-					  loadQGendaURL();
+					  
 					  
 					  const cacheWhitelist = [CACHE_NAME];
 					  
@@ -55,12 +55,20 @@ let db;
 
 function initDB() {
 	const request = indexedDB.open(dbName, 1);
-	
+	//no existing database with the specified name), the onupgradeneeded event is triggered.
+	//onupgradeneeded event is also triggered if you open a database with a version number higher than the currently existing database version
 	request.onupgradeneeded = function(event) {
 		db = event.target.result;
-		db.createObjectStore(calstoreName, { keyPath: 'id', autoIncrement: true });
+		if (!db.objectStoreNames.contains(clockstoreName)) {
+			db.createObjectStore(clockstoreName, { keyPath: 'id', autoIncrement: true });
+		}
+		
+		if (!db.objectStoreNames.contains(calstoreName)) {
+			db.createObjectStore(calstoreName, { keyPath: 'id', autoIncrement: true });
+		}
 	};
 	
+	// initDB() will take it from here if database of the same version already exists.
 	request.onsuccess = function(event) {
 		db = event.target.result;
 		loadQGendaURL();
@@ -76,7 +84,7 @@ function getTransaction(storeName, mode) {
 	return transaction.objectStore(storeName);
 }
 
-initDB();
+
 
 self.addEventListener('message', function(event) {
 					  const message = event.data;
@@ -84,6 +92,10 @@ self.addEventListener('message', function(event) {
 					  if (message.type === 'fetch-calendar') {
 					  //fetchCalendarInBackground(message.data.url);
 					  bgcalendarfetch(message.data.url);
+					  }
+					  if (event.data.type === 'database-ready') {
+					  // Proceed with operations, knowing the database setup is complete
+					  initDB();
 					  }
 					  });
 

@@ -63,9 +63,20 @@
 				}
 				const request = indexedDB.open(dbName, 1);
 				
+				
 				request.onupgradeneeded = function(event) {
 					db = event.target.result;
-					db.createObjectStore(clockstoreName, { keyPath: 'id', autoIncrement: true });
+					if (!db.objectStoreNames.contains(clockstoreName)) {
+						db.createObjectStore(clockstoreName, { keyPath: 'id', autoIncrement: true });
+					}
+					
+					if (!db.objectStoreNames.contains(calstoreName)) {
+						db.createObjectStore(calstoreName, { keyPath: 'id', autoIncrement: true });
+					}
+					
+					navigator.serviceWorker.ready.then(function(registration) {
+													   registration.active.postMessage({ type: 'database-ready' });
+													   });
 					
 				};
 				
