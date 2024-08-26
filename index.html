@@ -128,32 +128,32 @@
 			const newurl = convertUrlPrefix(document.getElementById('qgendaurl').value);
 			document.getElementById('qgendaurl').value=newurl;
 			saveQGendaURL(newurl);
-			
-				// Send a message to the Service Worker
-				if (navigator.serviceWorker.controller) {
-					navigator.serviceWorker.controller.postMessage({ type: 'fetch-calendar', data: { url: newurl } });
+
+				if ('serviceWorker' in navigator) {
+					navigator.serviceWorker.ready.then(function(registration) {
+													   registration.active.postMessage({ type: 'fetch-calendar', data: { url: newurl } });
+													   
+													   // Listen for messages from the Service Worker
+													   navigator.serviceWorker.addEventListener('message', function(event) {
+																								if (event.data.type === 'fetch-complete') {
+																								if (event.data.status === 'success') {
+																								console.log('Fetch complete, data is ready');
+																								// Handle the successful fetch
+																								displayTodaysAssignment();
+																								} else if (event.data.status === 'error') {
+																								console.error('Fetch failed:', event.data.error);
+																								// Handle the error
+																								}
+																								}
+																								});
+													   });
 				}
-				
 			
-				
-				
 			
-			//now we should have fetched the calendar or at least trying to fetch the calendar. so display the selected date assignment
-			//displayTodaysAssignment(); //handled in sw once calendar data is available.
+			
 			
 		}
-		navigator.serviceWorker.addEventListener('message', function(event) {
-												 if (event.data.type === 'fetch-complete') {
-												 if (event.data.status === 'success') {
-												 console.log('Fetch complete, data is ready');
-												 // Handle the successful fetch
-												 displayTodaysAssignment();
-												 } else if (event.data.status === 'error') {
-												 console.error('Fetch failed:', event.data.error);
-												 // Handle the error
-												 }
-												 }
-												 });
+
 		
 		
 		function handleUpdatedAssignment(mynewassignment){
