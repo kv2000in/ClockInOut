@@ -88,7 +88,9 @@
 					db = event.target.result;
 					if (callback) callback();
 					loadQGendaURL();
-				};
+					navigator.serviceWorker.ready.then(function(registration) {
+													   registration.active.postMessage({ type: 'database-ready' });
+													   });				};
 				
 				
 				
