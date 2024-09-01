@@ -135,7 +135,7 @@ async function loadQGendaURL() {
 		const result = event.target.result;
 		if (result) {
 			//fetch calendar if there is a stored value of calendar url
-			fetch(result)
+			fetch(result.value)
 			.then(response => response.text())
 			.then(data => {
 				  // Process the data and store it as needed
