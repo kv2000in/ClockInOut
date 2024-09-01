@@ -509,6 +509,7 @@ function formatDate(date) {
 										  // Assignment for today exists in IndexedDB
 										  document.getElementById('assignmentInput').value = todayAssignment.assignment;
 										  //check if already clocked in clocked out for today for this assignment and set display accordingly
+										  console.log("checking clock status" + formattedToday + todayAssignment.assignment + document.getElementById('assignmentInput').value);
 										  getAssignmentByDateAndSummary(formattedToday,todayAssignment.assignment).then((result) => {
 																											if (result) {
 																											//console.log('Assignment found:', result);
