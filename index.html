@@ -378,7 +378,7 @@
 												  //No record exists for this date and assignment
 												  
 												   await saveRecord({
-												   date:formattedToday;
+												   date:formattedToday,
 												   clockInTime: new Date(dateTime).toLocaleString(),
 												   assignment: assignment,
 												   clockOutTime: null,
@@ -399,7 +399,7 @@
 												  
 												  if (dateTime) {
 												  await saveRecord({
-																   date:formattedToday;
+																   date:formattedToday,
 																   clockInTime: new Date(dateTime).toLocaleString(),
 																   assignment: assignment,
 																   clockOutTime: null,
