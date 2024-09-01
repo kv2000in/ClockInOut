@@ -27,10 +27,12 @@
 		<div class="container">
 			<h1>Clock In/Out</h1>
 			<input type="text" id="qgendaurl" placeholder="Enter Qgenda Calendar URL">
+				<input type="datetime-local" id="dateTimeInput">
 				<input type="text" id="assignmentInput" placeholder="Enter your assignment">
-					<input type="datetime-local" id="dateTimeInput">
+					<input type="datetime-local" id="ClockInTimeInput">
 						<button id="clockInButton" onclick="clockIn()">Clock In</button>
-						<button id="clockOutButton" onclick="clockOut()" disabled>Clock Out</button>
+						<input type="datetime-local" id="ClockOutTimeInput">
+						<button id="clockOutButton" onclick="clockOut()">Clock Out</button>
 						
 						<h2>Get Records</h2>
 						<input type="datetime-local" id="startDate">
@@ -61,27 +63,31 @@
 				} else {
 					console.log("Persistent storage is not supported by this browser.");
 				}
-				const request = indexedDB.open(dbName, 1);
 				
+				const request = indexedDB.open(dbName, 1);
 				
 				request.onupgradeneeded = function(event) {
 					db = event.target.result;
+					
+					let clockStore;
 					if (!db.objectStoreNames.contains(clockstoreName)) {
-						db.createObjectStore(clockstoreName, { keyPath: 'id', autoIncrement: true });
-					}
-					
-					if (!db.objectStoreNames.contains(calstoreName)) {
-						db.createObjectStore(calstoreName, { keyPath: 'id', autoIncrement: true });
+						clockStore = db.createObjectStore(clockstoreName, { keyPath: 'id', autoIncrement: true });
 					} else {
-						//calendar store exists - let's get todays assignments.
-						//displayTodaysAssignment();
-						
+						clockStore = request.transaction.objectStore(clockstoreName);
 					}
 					
-					navigator.serviceWorker.ready.then(function(registration) {
-													   registration.active.postMessage({ type: 'database-ready' });
-													   });
-					
+						// Add the index on date and assignment
+						if (!clockStore.indexNames.contains('date_assignment_index')) {
+							clockStore.createIndex('date_assignment_index', ['date', 'assignment'], { unique: true });
+						}
+						
+						if (!db.objectStoreNames.contains(calstoreName)) {
+							db.createObjectStore(calstoreName, { keyPath: 'id', autoIncrement: true });
+						}
+						
+						navigator.serviceWorker.ready.then(function(registration) {
+														   registration.active.postMessage({ type: 'database-ready' });
+														   });
 				};
 				
 				request.onsuccess = function(event) {
@@ -90,14 +96,14 @@
 					loadQGendaURL();
 					navigator.serviceWorker.ready.then(function(registration) {
 													   registration.active.postMessage({ type: 'database-ready' });
-													   });				};
-				
-				
+													   });
+				};
 				
 				request.onerror = function(event) {
 					console.error('IndexedDB error:', event.target.errorCode);
 				};
 			}
+
 		
 		function getTransaction(storeName, mode) {
 				//Check if dB is ready or initialized.
@@ -170,7 +176,8 @@
 			
 			const mydate = document.getElementById('dateTimeInput').value;
 			const formattedToday = formatQDate(formatDateTime(mydate));
-			updateAssignmentInDB(formattedToday,mynewassignment);
+			//Leave the Qgenda calendar alone. Handle updated assignments in clockstore
+			//updateAssignmentInDB(formattedToday,mynewassignment);
 			
 		}
 		
@@ -290,20 +297,65 @@
 												  };
 												  }
 												  
+												  function getAssignmentByDateAndSummary(date, summary) {
+												  const transaction = db.transaction(['assignments'], 'readonly');
+												  const store = transaction.objectStore('assignments');
+												  const index = store.index('date_assignment_index'); // Assumes you have an index on date and assignment
+												  
+												  const query = IDBKeyRange.only([date, summary]);
+												  const request = index.get(query);
+												  
+												  return new Promise((resolve, reject) => {
+																	 request.onsuccess = function(event) {
+																	 resolve(event.target.result);
+																	 };
+																	 request.onerror = function(event) {
+																	 reject('Failed to retrieve assignment');
+																	 };
+																	 });
+												  }
+												  
+												  // Example usage:
+												  /*
+												  getAssignmentByDateAndSummary('2024-08-29', 'Morning Shift').then((result) => {
+																													if (result) {
+																													console.log('Assignment found:', result);
+																													} else {
+																													console.log('Assignment not found');
+																													}
+																													}).catch((error) => {
+																															 console.error(error);
+																															 });
+												  
+												  
+												  */
+												  
 												  async function clockIn() {
 												  const assignment = document.getElementById('assignmentInput').value;
 												  const dateTime = document.getElementById('dateTimeInput').value;
 												  
-												  if (assignment && dateTime) {
+												  const formattedToday = formatQDate(formatDateTime(dateTime));												  if (assignment && dateTime) {
+												  //Check if a record exists for this date and assignment
+												  getAssignmentByDateAndSummary(formatQDate,assignment).then((result) => {
+																													if (result) {
+																													console.log('Assignment found:', result);
+																													} else {
+																													console.log('Assignment not found');
+																													}
+																													}).catch((error) => {
+																															 console.error(error);
+																															 });												  //if it does - then update it with new values
+												  //No record exists for this date and assignment
+												  /*
 												  await saveRecord({
 																   clockInTime: new Date(dateTime).toLocaleString(),
 																   assignment: assignment,
 																   clockOutTime: null,
 																   });
-												  
+												  */
 												  
 												  //document.getElementById('clockInButton').disabled = true;
-												  document.getElementById('clockInButton').innerHTML = "Clocked In at "+ document.getElementById('dateTimeInput').value;
+												  document.getElementById('clockInButton').innerHTML = "Clocked In"; //document.getElementById('ClockInTimeInput').value = ;
 												  //document.getElementById('clockOutButton').disabled = false;
 												  } else {
 												  alert('Please enter your assignment and select a date/time.');
