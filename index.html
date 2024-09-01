@@ -298,8 +298,7 @@
 												  }
 												  
 												  function getAssignmentByDateAndSummary(date, summary) {
-												  const transaction = db.transaction(['assignments'], 'readonly');
-												  const store = transaction.objectStore('assignments');
+												  const store = getTransaction(clockstoreName, 'readwrite');
 												  const index = store.index('date_assignment_index'); // Assumes you have an index on date and assignment
 												  
 												  const query = IDBKeyRange.only([date, summary]);
