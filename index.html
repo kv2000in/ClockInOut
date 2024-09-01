@@ -395,7 +395,12 @@ function formatDate(date) {
 										  } else {
 										  //console.log('Record not found');
 										  
-										
+										  store.put({date:formattedToday,
+										  // clockInTime: new Date(dateTime).toLocaleString(),
+										  clockInTime: document.getElementById('ClockInTimeInput').value,
+										  assignment: assignment,
+										  clockOutTime: null,});
+										  
 										   
 										  
 										  
@@ -406,13 +411,7 @@ function formatDate(date) {
 															 console.log('Failed to retrieve assignment');
 										  //No record exists for this date and assignment
 										  
-										   saveRecord({
-														   date:formattedToday,
-														   // clockInTime: new Date(dateTime).toLocaleString(),
-														   clockInTime: document.getElementById('ClockInTimeInput').value,
-														   assignment: assignment,
-														   clockOutTime: null,
-														   });				 
+										  				 
 										  
 										  }
 															 ;
@@ -467,7 +466,13 @@ function formatDate(date) {
 										  } else {
 										  //console.log('Record not found');
 										  
-										
+										  store.put({
+													 date:formattedToday,
+													 // clockInTime: new Date(dateTime).toLocaleString(),
+													 clockInTime: null,
+													 assignment: assignment,
+													 clockOutTime: document.getElementById('ClockOutTimeInput').value,
+													 });
 										  
 										  
 										  
@@ -478,13 +483,7 @@ function formatDate(date) {
 										  console.log('Failed to retrieve assignment');
 										  //No record exists for this date and assignment
 										  
-										  saveRecord({
-														   date:formattedToday,
-														   // clockInTime: new Date(dateTime).toLocaleString(),
-														   clockInTime: null,
-														   assignment: assignment,
-														   clockOutTime: document.getElementById('ClockOutTimeInput').value,
-														   });
+										  
 										  };
 										  
 										  
@@ -498,6 +497,14 @@ function formatDate(date) {
 										  }
 										  
 										  async function displayTodaysAssignment() {
+										  //clear and reset the clock in/clock out times and buttons
+										  const now = new Date();
+										  const localDateTime = formatDateTime(now);
+										  document.getElementById('ClockOutTimeInput').value = localDateTime;
+										  document.getElementById('ClockInTimeInput').value = localDateTime;
+										  document.getElementById('clockInButton').innerHTML = "Clock In";
+										  document.getElementById('clockOutButton').innerHTML = "Clock Out";
+										  
 										  const mydate = document.getElementById('dateTimeInput').value;
 										  const formattedToday = formatQDate(formatDateTime(mydate));
 										  
