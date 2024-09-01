@@ -363,7 +363,7 @@
 												  
 												  if (assignment && dateTime) {
 												  //Check if a record exists for this date and assignment
-												  
+												  console.log(formatQDate , assignment);
 												  getAssignmentByDateAndSummary(formatQDate, assignment).then((result)=>{
 																											  if (result) {
 																											  console.log('Assignment found:', result);
