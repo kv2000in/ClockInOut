@@ -207,6 +207,8 @@ function initializeDateTimeInputs(callback) {
 	document.getElementById('dateTimeInput').value = localDateTime;
 	document.getElementById('startDate').value = localDateTime;
 	document.getElementById('endDate').value = localDateTime;
+	document.getElementById('ClockOutTimeInput').value = localDateTime;
+	document.getElementById('ClockInTimeInput').value = localDateTime;
 	
 		// Check if assignment exists in the DB
 	if (callback)
@@ -359,7 +361,7 @@ function formatDate(date) {
 										  const assignment = document.getElementById('assignmentInput').value;
 										  const dateTime = document.getElementById('dateTimeInput').value;
 										  
-										  const formattedToday = formatQDate(formatDateTime(dateTime));
+										  const formattedToday = formatQDate(formatDateTime(dateTime)); //Date of interest
 										  
 										  if (assignment && dateTime) {
 										  //Check if a record exists for this date and assignment
@@ -373,55 +375,126 @@ function formatDate(date) {
 										  
 										  
 										request.onsuccess = function(event) {
-															 console.log(event.target.result);
-															 
+										  const record = event.target.result;
 										  
+										  if (record) {
+										  // Modify the record as needed
+										  
+										  record.clockInTime = document.getElementById('ClockInTimeInput').value; // vs current time
+										  
+										  // Save the updated record back into the object store
+										  const updateRequest = store.put(record);
+										  
+										  updateRequest.onsuccess = function(event) {
+										  //console.log('Record updated successfully!');
+										  };
+										  
+										  updateRequest.onerror = function(event) {
+										  //console.error('Error updating record:', event.target.errorCode);
+										  };
+										  } else {
+										  //console.log('Record not found');
+										  
+										
+										   
+										  
+										  
+										  }
 										  }
 															 ;
 										request.onerror = function(event) {
 															 console.log('Failed to retrieve assignment');
-															 }
+										  //No record exists for this date and assignment
+										  
+										  await saveRecord({
+														   date:formattedToday,
+														   // clockInTime: new Date(dateTime).toLocaleString(),
+														   clockInTime: document.getElementById('ClockInTimeInput').value,
+														   assignment: assignment,
+														   clockOutTime: null,
+														   });				 
+										  
+										  }
 															 ;
 															 
 															 
 										  
 										  
-										  //No record exists for this date and assignment
-										  /*
-										  await saveRecord({
-														   date:formattedToday,
-														   clockInTime: new Date(dateTime).toLocaleString(),
-														   assignment: assignment,
-														   clockOutTime: null,
-														   });
 										  
-										  */
-										  //document.getElementById('clockInButton').disabled = true;
 										  document.getElementById('clockInButton').innerHTML = "Clocked In";
-										  //document.getElementById('ClockInTimeInput').value = ;
-										  //document.getElementById('clockOutButton').disabled = false;
+										
 										  } else {
 										  alert('Please enter your assignment and select a date/time.');
 										  }
 										  }
 										  
 										  async function clockOut() {
+										
+										  const assignment = document.getElementById('assignmentInput').value;
 										  const dateTime = document.getElementById('dateTimeInput').value;
 										  
-										  if (dateTime) {
+										  const formattedToday = formatQDate(formatDateTime(dateTime)); //Date of interest
+										  
+										  if (assignment && dateTime) {
+										  //Check if a record exists for this date and assignment
+										  
+										  const store = getTransaction(clockstoreName, 'readwrite');
+										  const index = store.index('date_assignment_index');
+										  // Assumes you have an index on date and assignment
+										  
+										  const query = IDBKeyRange.only([formattedToday, assignment]);
+										  const request = index.get(query);
+										  
+										  
+										  request.onsuccess = function(event) {
+										  const record = event.target.result;
+										  
+										  if (record) {
+										  // Modify the record as needed
+										  
+										  record.clockOutTime = document.getElementById('ClockOutTimeInput').value; // vs current time
+										  
+										  // Save the updated record back into the object store
+										  const updateRequest = store.put(record);
+										  
+										  updateRequest.onsuccess = function(event) {
+										  //console.log('Record updated successfully!');
+										  };
+										  
+										  updateRequest.onerror = function(event) {
+										  //console.error('Error updating record:', event.target.errorCode);
+										  };
+										  } else {
+										  //console.log('Record not found');
+										  
+										
+										  
+										  
+										  
+										  }
+										  }
+										  ;
+										  request.onerror = function(event) {
+										  console.log('Failed to retrieve assignment');
+										  //No record exists for this date and assignment
+										  
 										  await saveRecord({
 														   date:formattedToday,
-														   clockInTime: new Date(dateTime).toLocaleString(),
+														   // clockInTime: new Date(dateTime).toLocaleString(),
+														   clockInTime: null,
 														   assignment: assignment,
-														   clockOutTime: null,
+														   clockOutTime: document.getElementById('ClockOutTimeInput').value,
 														   });
-										  document.getElementById('clockOutButton').innerHTML = "Clocked Out at " + document.getElementById('dateTimeInput').value;
-										  //document.getElementById('clockInButton').disabled = false;
-										  //document.getElementById('clockOutButton').disabled = true;
+										  };
 										  
+										  
+										  document.getElementById('clockOutButton').innerHTML = "Clocked Out";
+										
 										  } else {
-										  alert('Please select a date/time.');
+										  alert('Please enter your assignment and select a date/time.');
 										  }
+										  
+										  
 										  }
 										  
 										  async function displayTodaysAssignment() {
@@ -435,6 +508,28 @@ function formatDate(date) {
 										  if (todayAssignment) {
 										  // Assignment for today exists in IndexedDB
 										  document.getElementById('assignmentInput').value = todayAssignment.assignment;
+										  //check if already clocked in clocked out for today for this assignment and set display accordingly
+										  getAssignmentByDateAndSummary(formattedToday,todayAssignment.assignment).then((result) => {
+																											if (result) {
+																											//console.log('Assignment found:', result);
+																														if (result.clockInTime){document.getElementById('clockInButton').innerHTML = "Clocked In";
+																														document.getElementById('ClockInTimeInput').value=result.clockInTime;
+																														if (result.clockOutTime){
+																														document.getElementById('clockOutButton').innerHTML = "Clocked Out";
+																														document.getElementById('ClockOutTimeInput').value=result.clockOutTime;							
+																														
+																														}
+																														}
+																														
+																														
+																														} else {
+																											console.log('Assignment not found');
+																											}
+																											}).catch((error) => {
+																													 console.error(error);
+																													 });
+										  
+									
 										  } else {//Assignment for the date not in Database
 										  }
 										  } catch (error) {
