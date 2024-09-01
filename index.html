@@ -11,112 +11,133 @@
 								font-family: Arial, sans-serif;
 								margin: 50px;
 							}
+						
 						.container {
 							max-width: 300px;
 							margin: auto;
 							text-align: center;
 						}
+						
 						input[type="text"], input[type="datetime-local"], button {
 							padding: 10px;
 							margin: 5px;
 							width: 100%;
 						}
 						</style>
-	</head>
+						</head>
 	<body>
 		<div class="container">
 			<h1>Clock In/Out</h1>
 			<input type="text" id="qgendaurl" placeholder="Enter Qgenda Calendar URL">
 				<input type="datetime-local" id="dateTimeInput">
-				<input type="text" id="assignmentInput" placeholder="Enter your assignment">
-					<input type="datetime-local" id="ClockInTimeInput">
-						<button id="clockInButton" onclick="clockIn()">Clock In</button>
-						<input type="datetime-local" id="ClockOutTimeInput">
-						<button id="clockOutButton" onclick="clockOut()">Clock Out</button>
-						
-						<h2>Get Records</h2>
-						<input type="datetime-local" id="startDate">
-							<input type="datetime-local" id="endDate">
-								<button onclick="getRecords()">Get Records</button>
-								<button onclick="getLastWeekRecords()">Last Week</button>
-								<button onclick="getLastMonthRecords()">Last Month</button>
-								<!-- <button onclick="clearIndexedDB()">Clear IndexedDB</button> -->
-								</div>
-		
+					<input type="text" id="assignmentInput" placeholder="Enter your assignment">
+						<input type="datetime-local" id="ClockInTimeInput">
+							<button id="clockInButton" onclick="clockIn()">Clock In</button>
+							<input type="datetime-local" id="ClockOutTimeInput">
+								<button id="clockOutButton" onclick="clockOut()">Clock Out</button>
+								<h2>Get Records</h2>
+								<input type="datetime-local" id="startDate">
+									<input type="datetime-local" id="endDate">
+										<button onclick="getRecords()">Get Records</button>
+										<button onclick="getLastWeekRecords()">Last Week</button>
+										<button onclick="getLastMonthRecords()">Last Month</button>
+										<!-- <button onclick="clearIndexedDB()">Clear IndexedDB</button> -->
+										</div>
 		<script>
 			const dbName = 'ClockInOutDB';
-			const calstoreName = 'calStore'; //calendar related items
-			const clockstoreName = 'clockStore'; //Clock In and Out store
-			let db;
-			
-			function initDB(callback) {
-				if (navigator.storage && navigator.storage.persist) {
-					navigator.storage.persist().then(function(isPersistent) {
-													 if (isPersistent) {
-													 console.log("Storage is set to persistent.");
-													 } else {
-													 console.log("Storage is not persistent.");
-													 }
-													 }).catch(function(error) {
-															  console.error("Error requesting persistent storage:", error);
-															  });
-				} else {
-					console.log("Persistent storage is not supported by this browser.");
-				}
-				
-				const request = indexedDB.open(dbName, 1);
-				
-				request.onupgradeneeded = function(event) {
-					db = event.target.result;
+			const calstoreName = 'calStore';
+				//calendar related items
+				const clockstoreName = 'clockStore';
+					//Clock In and Out store
+					let db;
 					
-					let clockStore;
-					if (!db.objectStoreNames.contains(clockstoreName)) {
-						clockStore = db.createObjectStore(clockstoreName, { keyPath: 'id', autoIncrement: true });
-					} else {
-						clockStore = request.transaction.objectStore(clockstoreName);
-					}
-					
-						// Add the index on date and assignment
-						if (!clockStore.indexNames.contains('date_assignment_index')) {
-							clockStore.createIndex('date_assignment_index', ['date', 'assignment'], { unique: true });
+					function initDB(callback) {
+						if (navigator.storage && navigator.storage.persist) {
+							navigator.storage.persist().then(function(isPersistent) {
+															 if (isPersistent) {
+															 console.log("Storage is set to persistent.");
+															 } else {
+															 console.log("Storage is not persistent.");
+															 }
+															 }).catch(function(error) {
+																	  console.error("Error requesting persistent storage:", error);
+																	  });
+						} else {
+							console.log("Persistent storage is not supported by this browser.");
 						}
 						
-						if (!db.objectStoreNames.contains(calstoreName)) {
-							db.createObjectStore(calstoreName, { keyPath: 'id', autoIncrement: true });
-						}
+						const request = indexedDB.open(dbName, 1);
 						
-						navigator.serviceWorker.ready.then(function(registration) {
-														   registration.active.postMessage({ type: 'database-ready' });
+						request.onupgradeneeded = function(event) {
+							db = event.target.result;
+							
+							let clockStore;
+							if (!db.objectStoreNames.contains(clockstoreName)) {
+								clockStore = db.createObjectStore(clockstoreName, {
+																  keyPath: 'id',
+																  autoIncrement: true
+																  });
+							} else {
+								clockStore = request.transaction.objectStore(clockstoreName);
+							}
+							
+								// Add the index on date and assignment
+								if (!clockStore.indexNames.contains('date_assignment_index')) {
+									clockStore.createIndex('date_assignment_index', ['date', 'assignment'], {
+														   unique: true
 														   });
-				};
-				
-				request.onsuccess = function(event) {
-					db = event.target.result;
-					if (callback) callback();
-					loadQGendaURL();
-					navigator.serviceWorker.ready.then(function(registration) {
-													   registration.active.postMessage({ type: 'database-ready' });
-													   });
-				};
-				
-				request.onerror = function(event) {
-					console.error('IndexedDB error:', event.target.errorCode);
-				};
-			}
-
+								}
+								
+								if (!db.objectStoreNames.contains(calstoreName)) {
+									db.createObjectStore(calstoreName, {
+														 keyPath: 'id',
+														 autoIncrement: true
+														 });
+								}
+								
+								navigator.serviceWorker.ready.then(function(registration) {
+																   registration.active.postMessage({
+																								   type: 'database-ready'
+																								   });
+																   });
+						}
+						;
+						
+						request.onsuccess = function(event) {
+							db = event.target.result;
+							if (callback)
+							callback();
+							loadQGendaURL();
+							navigator.serviceWorker.ready.then(function(registration) {
+															   registration.active.postMessage({
+																							   type: 'database-ready'
+																							   });
+															   });
+						}
+						;
+						
+						request.onerror = function(event) {
+							console.error('IndexedDB error:', event.target.errorCode);
+						}
+						;
+					}
 		
 		function getTransaction(storeName, mode) {
 				//Check if dB is ready or initialized.
 				if (db && db.objectStoreNames.contains([storeName])) {
 					const transaction = db.transaction([storeName], mode);
 					return transaction.objectStore(storeName);
+				} else {
+					console.log("getTransaction -db not ready or doesn't have requested store = " + storeName);
 				}
-				else {console.log("getTransaction -db not ready or doesn't have requested store = "+storeName);}
 		}
 		
 		async function saveQGendaURL(url) {
 			const store = getTransaction(calstoreName, 'readwrite');
-			store.put({ id: 'qgendaurl', value: url });
+			store.put({
+					  id: 'qgendaurl',
+					  value: url
+					  });
 		}
 		
 		async function loadQGendaURL() {
@@ -127,26 +148,32 @@
 				if (result) {
 					document.getElementById('qgendaurl').value = result.value;
 				}
-			};
+			}
+			;
 		}
-		
 		
 		async function saveRecord(record) {
 			const store = getTransaction(clockstoreName, 'readwrite');
 			store.put(record);
 		}
 		
-		function handleURLupdate(){
+		function handleURLupdate() {
 			const newurl = convertUrlPrefix(document.getElementById('qgendaurl').value);
-			document.getElementById('qgendaurl').value=newurl;
+			document.getElementById('qgendaurl').value = newurl;
 			saveQGendaURL(newurl);
-
-			if ('serviceWorker' in navigator) {
+			
+			if ('serviceWorker'in navigator) {
 				navigator.serviceWorker.ready.then(function(registration) {
-												   registration.active.postMessage({ type: 'fetch-calendar', data: { url: newurl } });
-												   }).catch(error => {
+												   registration.active.postMessage({
+																				   type: 'fetch-calendar',
+																				   data: {
+																				   url: newurl
+																				   }
+																				   });
+												   }).catch(error=>{
 															console.error('Service Worker registration error:', error);
-															});
+															}
+															);
 															
 																// Listen for messages from the service worker
 																navigator.serviceWorker.addEventListener('message', function(event) {
@@ -162,23 +189,16 @@
 																										 }
 																										 });
 			}
-
-
-			
-			
-			
 			
 		}
-
 		
-		
-		function handleUpdatedAssignment(mynewassignment){
+		function handleUpdatedAssignment(mynewassignment) {
 			
 			const mydate = document.getElementById('dateTimeInput').value;
 			const formattedToday = formatQDate(formatDateTime(mydate));
-			//Leave the Qgenda calendar alone. Handle updated assignments in clockstore
-			//updateAssignmentInDB(formattedToday,mynewassignment);
-			
+				//Leave the Qgenda calendar alone. Handle updated assignments in clockstore
+					//updateAssignmentInDB(formattedToday,mynewassignment);
+					
 		}
 		
 		function initializeDateTimeInputs(callback) {
@@ -189,7 +209,8 @@
 			document.getElementById('endDate').value = localDateTime;
 			
 				// Check if assignment exists in the DB
-				if (callback) callback();
+				if (callback)
+				callback();
 		}
 		
 		async function getRecords() {
@@ -200,12 +221,10 @@
 			const request = store.getAll();
 			request.onsuccess = function(event) {
 				const records = event.target.result;
-				const filteredRecords = records.filter(record => {
-													   return record.clockInTime &&
-													   record.clockOutTime &&
-													   new Date(record.clockInTime) >= new Date(startDate) &&
-													   new Date(record.clockOutTime) <= new Date(endDate);
-													   });
+				const filteredRecords = records.filter(record=>{
+													   return record.clockInTime && record.clockOutTime && new Date(record.clockInTime) >= new Date(startDate) && new Date(record.clockOutTime) <= new Date(endDate);
+													   }
+													   );
 													   
 													   if (filteredRecords.length === 0) {
 														   alert('No data exists for the selected time period.');
@@ -213,42 +232,42 @@
 													   }
 													   
 													   const csvContent = generateCSV(filteredRecords);
-													   downloadCSV(csvContent, `records_${formatDate(startDate)}_${formatDate(endDate)}.csv`);
-			};
+													   downloadCSV(csvContent, `records_ ${formatDate(startDate)}_ ${formatDate(endDate)}.csv`);
+			}
+			;
 		}
 		
 		function generateCSV(records) {
 			const csvHeaders = ['Assignment', 'Clock-in Time', 'Clock-out Time', 'Time at Work'];
 			const csvRows = [csvHeaders.join(',')];
 			
-			records.forEach(record => {
-							const row = [
-										 `"${record.assignment}"`,
-										 `"${record.clockInTime}"`,
-										 `"${record.clockOutTime}"`,
-										 `"${calculateTimeAtWork(new Date(record.clockInTime), new Date(record.clockOutTime))}"`
-										 ];
+			records.forEach(record=>{
+							const row = [`"${record.assignment}"`, `"${record.clockInTime}"`, `"${record.clockOutTime}"`, `"${calculateTimeAtWork(new Date(record.clockInTime), new Date(record.clockOutTime))}"`];
 							csvRows.push(row.join(','));
-							});
+							}
+							);
 							
 							return csvRows.join('\n');
 		}
 		
 		function downloadCSV(csvContent, filename) {
-			const blob = new Blob([csvContent], { type: 'text/csv' });
-			const url = URL.createObjectURL(blob);
-			const a = document.createElement('a');
-			a.href = url;
-			a.download = filename;
-			a.click();
-			URL.revokeObjectURL(url);
+			const blob = new Blob([csvContent],{
+								  type: 'text/csv'
+								  });
+								  const url = URL.createObjectURL(blob);
+								  const a = document.createElement('a');
+								  a.href = url;
+								  a.download = filename;
+								  a.click();
+								  URL.revokeObjectURL(url);
 		}
 		
 		function calculateTimeAtWork(clockInTime, clockOutTime) {
-			const diff = (clockOutTime - clockInTime) / 1000; // difference in seconds
-			const hours = Math.floor(diff / 3600);
-			const minutes = Math.floor((diff % 3600) / 60);
-			return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+			const diff = (clockOutTime - clockInTime) / 1000;
+				// difference in seconds
+				const hours = Math.floor(diff / 3600);
+				const minutes = Math.floor((diff % 3600) / 60);
+				return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 		}
 		
 		function formatDate(date) {
@@ -258,14 +277,14 @@
 												  
 												  function formatDateTime(inputDateTime) {
 												  const date = new Date(inputDateTime);
-												  const pad = (num, size) => num.toString().padStart(size, '0');
+												  const pad = (num,size)=>num.toString().padStart(size, '0');
 												  const year = date.getFullYear();
 												  const month = pad(date.getMonth() + 1, 2);
 												  const day = pad(date.getDate(), 2);
 												  const hours = pad(date.getHours(), 2);
 												  const minutes = pad(date.getMinutes(), 2);
 												  const seconds = pad(date.getSeconds(), 2);
-												  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+												  return `${year}-${month}-${day}T ${hours}:${minutes}:${seconds}`;
 												  }
 												  
 												  function getLastWeekRecords() {
@@ -291,70 +310,84 @@
 												  request.onsuccess = function() {
 												  alert('IndexedDB cleared.');
 												  initDB();
-												  };
+												  }
+												  ;
 												  request.onerror = function(event) {
 												  console.error('IndexedDB clear error:', event.target.errorCode);
-												  };
+												  }
+												  ;
 												  }
 												  
 												  function getAssignmentByDateAndSummary(date, summary) {
 												  const store = getTransaction(clockstoreName, 'readwrite');
-												  const index = store.index('date_assignment_index'); // Assumes you have an index on date and assignment
+												  const index = store.index('date_assignment_index');
+												  // Assumes you have an index on date and assignment
 												  
 												  const query = IDBKeyRange.only([date, summary]);
 												  const request = index.get(query);
 												  
-												  return new Promise((resolve, reject) => {
+												  return new Promise((resolve,reject)=>{
 																	 request.onsuccess = function(event) {
 																	 resolve(event.target.result);
-																	 };
+																	 }
+																	 ;
 																	 request.onerror = function(event) {
 																	 reject('Failed to retrieve assignment');
-																	 };
-																	 });
+																	 }
+																	 ;
+																	 }
+																	 );
 												  }
 												  
 												  // Example usage:
 												  /*
-												  getAssignmentByDateAndSummary('2024-08-29', 'Morning Shift').then((result) => {
-																													if (result) {
-																													console.log('Assignment found:', result);
-																													} else {
-																													console.log('Assignment not found');
-																													}
-																													}).catch((error) => {
-																															 console.error(error);
-																															 });
-												  
-												  
-												  */
+												   getAssignmentByDateAndSummary('2024-08-29', 'Morning Shift').then((result) => {
+												   if (result) {
+												   console.log('Assignment found:', result);
+												   } else {
+												   console.log('Assignment not found');
+												   }
+												   }).catch((error) => {
+												   console.error(error);
+												   });
+												   
+												   
+												   */
 												  
 												  async function clockIn() {
 												  const assignment = document.getElementById('assignmentInput').value;
 												  const dateTime = document.getElementById('dateTimeInput').value;
 												  
-												  const formattedToday = formatQDate(formatDateTime(dateTime));												  if (assignment && dateTime) {
-												  //Check if a record exists for this date and assignment
-												  getAssignmentByDateAndSummary(formatQDate,assignment).then((result) => {
-																													if (result) {
-																													console.log('Assignment found:', result);
-																													} else {
-																													console.log('Assignment not found');
-																													}
-																													}).catch((error) => {
-																															 console.error(error);
-																															 });												  //if it does - then update it with new values
-												  //No record exists for this date and assignment
+												  const formattedToday = formatQDate(formatDateTime(dateTime));
 												  /*
-												  await saveRecord({
-																   clockInTime: new Date(dateTime).toLocaleString(),
-																   assignment: assignment,
-																   clockOutTime: null,
-																   });
+												  if (assignment && dateTime) {
+												  //Check if a record exists for this date and assignment
+												  getAssignmentByDateAndSummary(formatQDate, assignment).then((result)=>{
+																											  if (result) {
+																											  console.log('Assignment found:', result);
+																											  } else {
+																											  console.log('Assignment not found');
+																											  }
+																											  }
+																											  ).catch((error)=>{
+																													  console.error(error);
+																													  }
+																													  );
 												  */
+												   //if it does - then update it with new values
+												  //No record exists for this date and assignment
+												  
+												   await saveRecord({
+												   date:formattedToday;
+												   clockInTime: new Date(dateTime).toLocaleString(),
+												   assignment: assignment,
+												   clockOutTime: null,
+												   });
+												   
 												  
 												  //document.getElementById('clockInButton').disabled = true;
-												  document.getElementById('clockInButton').innerHTML = "Clocked In"; //document.getElementById('ClockInTimeInput').value = ;
+												  document.getElementById('clockInButton').innerHTML = "Clocked In";
+												  //document.getElementById('ClockInTimeInput').value = ;
 												  //document.getElementById('clockOutButton').disabled = false;
 												  } else {
 												  alert('Please enter your assignment and select a date/time.');
@@ -366,17 +399,15 @@
 												  
 												  if (dateTime) {
 												  await saveRecord({
+																   date:formattedToday;
 																   clockInTime: new Date(dateTime).toLocaleString(),
 																   assignment: assignment,
 																   clockOutTime: null,
-																   });												  
-												  document.getElementById('clockOutButton').innerHTML = "Clocked Out at "+ document.getElementById('dateTimeInput').value;												  //document.getElementById('clockInButton').disabled = false;
+																   });
+												  document.getElementById('clockOutButton').innerHTML = "Clocked Out at " + document.getElementById('dateTimeInput').value;
+												  //document.getElementById('clockInButton').disabled = false;
 												  //document.getElementById('clockOutButton').disabled = true;
 												  
-												  
-												 
-												
-												
 												  } else {
 												  alert('Please select a date/time.');
 												  }
@@ -393,8 +424,7 @@
 												  if (todayAssignment) {
 												  // Assignment for today exists in IndexedDB
 												  document.getElementById('assignmentInput').value = todayAssignment.assignment;
-												  } else {
-												 //Assignment for the date not in Database
+												  } else {//Assignment for the date not in Database
 												  }
 												  } catch (error) {
 												  console.error('Error displaying today\'s assignment:', error);
@@ -403,25 +433,26 @@
 												  
 												  // Function to get an assignment from IndexedDB
 												  function getAssignmentFromDB(date) {
-												  return new Promise((resolve, reject) => {
+												  return new Promise((resolve,reject)=>{
 																	 const store = getTransaction(calstoreName, 'readonly');
 																	 const request = store.get(date);
 																	 
 																	 request.onsuccess = function(event) {
 																	 resolve(event.target.result);
-																	 };
+																	 }
+																	 ;
 																	 
 																	 request.onerror = function(event) {
 																	 reject(event.target.error);
-																	 };
-																	 });
+																	 }
+																	 ;
+																	 }
+																	 );
 												  }
-												  
-												  
 												  
 												  // Function to update assignment in IndexedDB
 												  function updateAssignmentInDB(date, summary) {
-												  return new Promise((resolve, reject) => {
+												  return new Promise((resolve,reject)=>{
 																	 const store = getTransaction(calstoreName, 'readwrite');
 																	 const request = store.get(date);
 																	 
@@ -429,27 +460,39 @@
 																	 const result = event.target.result;
 																	 if (result) {
 																	 // Replace the existing assignment with the new summary
-																	 store.put({ id: date, date: date, assignment: summary });
+																	 store.put({
+																			   id: date,
+																			   date: date,
+																			   assignment: summary
+																			   });
 																	 } else {
 																	 // Store new assignment
-																	 store.put({ id: date, date: date, assignment: summary });
+																	 store.put({
+																			   id: date,
+																			   date: date,
+																			   assignment: summary
+																			   });
 																	 }
 																	 resolve();
-																	 };
+																	 }
+																	 ;
 																	 
 																	 request.onerror = function(event) {
 																	 reject(event.target.error);
-																	 };
-																	 });
+																	 }
+																	 ;
+																	 }
+																	 );
 												  }
 												  
 												  // Utility functions (unchanged)
 												  function parseCustomDate(dateString) {
 												  const year = dateString.slice(0, 4);
-												  const month = dateString.slice(4, 6) - 1; // Months are 0-indexed in JavaScript
+												  const month = dateString.slice(4, 6) - 1;
+												  // Months are 0-indexed in JavaScript
 												  const day = dateString.slice(6, 8);
 												  
-												  return new Date(year, month, day);
+												  return new Date(year,month,day);
 												  }
 												  
 												  function formatQDate(date) {
@@ -463,7 +506,9 @@
 												  
 												  for (const line of lines) {
 												  if (line.startsWith('BEGIN:VEVENT')) {
-												  event = { details: {} };
+												  event = {
+												  details: {}
+												  };
 												  } else if (line.startsWith('SUMMARY:')) {
 												  event.details.summary = line.replace('SUMMARY:', '');
 												  } else if (line.startsWith('DTSTART;VALUE=DATE:')) {
@@ -480,10 +525,6 @@
 												  return events;
 												  }
 												  
-												 
-
-												 
-												  
 												  function convertUrlPrefix(url) {
 												  const oldPrefix = "https://app.qgenda.com/ical";
 												  const newPrefix = "/clock/qgenda/ical";
@@ -492,16 +533,10 @@
 												  if (url.startsWith(oldPrefix)) {
 												  return url.replace(oldPrefix, newPrefix);
 												  } else {
-												  return url; // Return the original URL if it doesn't match the old prefix
+												  return url;
+												  // Return the original URL if it doesn't match the old prefix
 												  }
 												  }
-												  
-												
-												  
-												  
-												  
-
-												
 												  
 												  function checkAndDisplayAssignment() {
 												  if (db && db.objectStoreNames.contains(calstoreName)) {
@@ -518,10 +553,8 @@
 																				  checkAndDisplayAssignment();
 																				  });
 														 });
-												  };
-												  
-												  
-												  
+												  }
+												  ;
 												  
 												  document.getElementById('qgendaurl').addEventListener('blur', function() {
 																										const url = this.value;
@@ -530,38 +563,37 @@
 																										}
 																										});
 												  
-												  
-												  
 												  function debounce(func, delay) {
 												  let timeout;
 												  return function(...args) {
 												  clearTimeout(timeout);
-												  timeout = setTimeout(() => func.apply(this, args), delay);
-												  };
+												  timeout = setTimeout(()=>func.apply(this, args), delay);
+												  }
+												  ;
 												  }
 												  
-											document.getElementById('assignmentInput').addEventListener('input', debounce(function() {
-																														  const url = this.value;
-																														  if (url) {
-																														  handleUpdatedAssignment(url);
-																														  }													  }, 500)); // Adjust the delay as needed
+												  document.getElementById('assignmentInput').addEventListener('input', debounce(function() {
+																																const url = this.value;
+																																if (url) {
+																																handleUpdatedAssignment(url);
+																																}
+																																}, 500));
+												  // Adjust the delay as needed
 												  
 												  document.getElementById('dateTimeInput').addEventListener('change', function() {
-																											  const url = this.value;
-																											  if (url) {
+																											const url = this.value;
+																											if (url) {
 																											displayTodaysAssignment();
-																											  }
-																											  });
-												  
+																											}
+																											});
 												  
 												  window.addEventListener('focus', function() {
 																		  //console.log('Window is back in focus');
 																		  initializeDateTimeInputs(function() {
 																								   checkAndDisplayAssignment();
 																								   });
-																		  																		  
+																		  
 																		  });
-												  
 												  
 												  function handleDateUpdate(event) {
 												  const selectedDate = event.target.value;
@@ -571,7 +603,7 @@
 												  }
 												  }
 												  // Service Worker registration
-												  if ('serviceWorker' in navigator) {
+												  if ('serviceWorker'in navigator) {
 												  window.addEventListener('load', function() {
 																		  navigator.serviceWorker.register('./service-worker.js').then(function(registration) {
 																																	   console.log('ServiceWorker registration successful with scope: ', registration.scope);
