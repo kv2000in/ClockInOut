@@ -80,8 +80,12 @@ function initDB() {
 }
 
 function getTransaction(storeName, mode) {
-	const transaction = db.transaction([storeName], mode);
+	//Check if dB is ready or initialized.
+	if (db && db.objectStoreNames.contains([storeName])) {
+		const transaction = db.transaction([storeName], mode);
 	return transaction.objectStore(storeName);
+	}
+	else {console.log("getTransaction -db not ready or doesn't have requested store = "+storeName);}
 }
 
 
@@ -131,7 +135,15 @@ async function loadQGendaURL() {
 		const result = event.target.result;
 		if (result) {
 			//fetch calendar if there is a stored value of calendar url
-			bgcalendarfetch(result.value);
+			fetch(result)
+			.then(response => response.text())
+			.then(data => {
+				  // Process the data and store it as needed
+				  bgcalendarfetch(data); 
+				  
+				  })			
+			
+			
 		}
 	};
 }

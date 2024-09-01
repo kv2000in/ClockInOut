@@ -74,7 +74,7 @@
 						db.createObjectStore(calstoreName, { keyPath: 'id', autoIncrement: true });
 					} else {
 						//calendar store exists - let's get todays assignments.
-						displayTodaysAssignment();
+						//displayTodaysAssignment();
 						
 					}
 					
@@ -98,8 +98,12 @@
 			}
 		
 		function getTransaction(storeName, mode) {
-			const transaction = db.transaction([storeName], mode);
-			return transaction.objectStore(storeName);
+				//Check if dB is ready or initialized.
+				if (db && db.objectStoreNames.contains([storeName])) {
+					const transaction = db.transaction([storeName], mode);
+					return transaction.objectStore(storeName);
+				}
+				else {console.log("getTransaction -db not ready or doesn't have requested store = "+storeName);}
 		}
 		
 		async function saveQGendaURL(url) {
@@ -296,8 +300,9 @@
 																   });
 												  
 												  
-												  document.getElementById('clockInButton').disabled = true;
-												  document.getElementById('clockOutButton').disabled = false;
+												  //document.getElementById('clockInButton').disabled = true;
+												  document.getElementById('clockInButton').innerHTML = "Clocked In at "+ document.getElementById('dateTimeInput').value;
+												  //document.getElementById('clockOutButton').disabled = false;
 												  } else {
 												  alert('Please enter your assignment and select a date/time.');
 												  }
@@ -307,30 +312,18 @@
 												  const dateTime = document.getElementById('dateTimeInput').value;
 												  
 												  if (dateTime) {
-												  const store = getTransaction(clockstoreName, 'readwrite');
-												  const request = store.openCursor(null, 'prev');
-												  request.onsuccess = async function(event) {
-												  const cursor = event.target.result;
-												  if (cursor) {
-												  if (cursor.value.clockOutTime === null) {
-												  cursor.update({
-																...cursor.value,
-																clockOutTime: new Date(dateTime).toLocaleString()
-																});
+												  await saveRecord({
+																   clockInTime: new Date(dateTime).toLocaleString(),
+																   assignment: assignment,
+																   clockOutTime: null,
+																   });												  
+												  document.getElementById('clockOutButton').innerHTML = "Clocked Out at "+ document.getElementById('dateTimeInput').value;												  //document.getElementById('clockInButton').disabled = false;
+												  //document.getElementById('clockOutButton').disabled = true;
 												  
 												  
-												  document.getElementById('clockInButton').disabled = false;
-												  document.getElementById('clockOutButton').disabled = true;
-												  } else {
-												  alert('No matching clock-in record found.');
-												  }
-												  } else {
-												  alert('No clock-in record found.');
-												  }
-												  };
-												  request.onerror = function(event) {
-												  console.error('Cursor error:', event.target.errorCode);
-												  };
+												 
+												
+												
 												  } else {
 												  alert('Please select a date/time.');
 												  }
@@ -450,16 +443,11 @@
 												  }
 												  }
 												  
-												  function checkAndDisplayAssignment() {
-												  if (db.objectStoreNames.contains(calstoreName)) {
-												  displayTodaysAssignment();
-												  }
-												  }
+												
 												  
 												  
 												  
-												  
-												  
+
 												
 												  
 												  function checkAndDisplayAssignment() {
@@ -511,6 +499,17 @@
 																											displayTodaysAssignment();
 																											  }
 																											  });
+												  
+												  
+												  window.addEventListener('focus', function() {
+																		  //console.log('Window is back in focus');
+																		  initializeDateTimeInputs(function() {
+																								   checkAndDisplayAssignment();
+																								   });
+																		  																		  
+																		  });
+												  
+												  
 												  function handleDateUpdate(event) {
 												  const selectedDate = event.target.value;
 												  if (selectedDate) {
