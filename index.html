@@ -30,7 +30,8 @@ width: 100%;
 <h1>Clock In/Out</h1>
 <input type="text" id="qgendaurl" placeholder="Enter Qgenda Calendar URL">
 <input type="datetime-local" id="dateTimeInput">
-<input type="text" id="assignmentInput" placeholder="Enter your assignment">
+<input type="hidden" id="assignmentInput" placeholder="Enter your assignment">
+<input type="text" id="storedassignmentInput" placeholder="Enter your assignment">
 <input type="datetime-local" id="ClockInTimeInput">
 <button id="clockInButton" onclick="clockIn()">Clock In</button>
 <input type="datetime-local" id="ClockOutTimeInput">
@@ -86,6 +87,9 @@ function initDB(callback) {
 			clockStore.createIndex('date_assignment_index', ['date', 'assignment'], {
 								   unique: true
 								   });
+			clockStore.createIndex('date_index', ['date'], {
+								   unique: false
+								   })
 		}
 		
 		if (!db.objectStoreNames.contains(calstoreName)) {
@@ -504,6 +508,7 @@ function formatDate(date) {
 										  document.getElementById('ClockInTimeInput').value = localDateTime;
 										  document.getElementById('clockInButton').innerHTML = "Clock In";
 										  document.getElementById('clockOutButton').innerHTML = "Clock Out";
+										  document.getElementById('storedassignmentInput').value=null;
 										  
 										  const mydate = document.getElementById('dateTimeInput').value;
 										  const formattedToday = formatQDate(formatDateTime(mydate));
@@ -515,8 +520,17 @@ function formatDate(date) {
 										  if (todayAssignment) {
 										  // Assignment for today exists in IndexedDB
 										  document.getElementById('assignmentInput').value = todayAssignment.assignment;
+										  //NOw check if this date has any stored assignments, if yes - then display that into storedassignmentinput. 
+										  getRecordsByDate(formattedToday, function(records) {
+														   records.forEach(function(record) {
+																		   console.log('Record:', record);
+																		   // Process each record as needed
+																		   });
+														   });
+										  
+										  
 										  //check if already clocked in clocked out for today for this assignment and set display accordingly
-										  //console.log("checking clock status" + formattedToday + todayAssignment.assignment + document.getElementById('assignmentInput').value);
+										  
 										  getAssignmentByDateAndSummary(formattedToday,document.getElementById('assignmentInput').value).then((result) => {
 																											if (result) {
 																											//console.log('Assignment found:', result);
@@ -544,6 +558,25 @@ function formatDate(date) {
 										  console.error('Error displaying today\'s assignment:', error);
 										  }
 										  }
+										  
+										  function getRecordsByDate(date, callback) {
+										  const store = getTransaction(clockstoreName, 'readonly');
+										  const index = store.index('date_index');
+										  
+										  // Query by date
+										  const keyRange = IDBKeyRange.only(date);
+										  const request = index.getAll(keyRange);
+										  
+										  request.onsuccess = function(event) {
+										  const records = event.target.result;
+										  callback(records); // Handle the array of records
+										  };
+										  
+										  request.onerror = function(event) {
+										  console.error('Error fetching records by date:', event.target.errorCode);
+										  };
+										  }
+
 										  
 										  // Function to get an assignment from IndexedDB
 										  function getAssignmentFromDB(date) {
