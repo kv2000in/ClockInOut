@@ -325,12 +325,12 @@ function formatDate(date) {
 										  ;
 										  }
 										  
-										  function getAssignmentByDateAndSummary(date, summary) {
+										  function getAssignmentsByDate(date) {
 										  const store = getTransaction(clockstoreName, 'readonly');
-										  const index = store.index('date_assignment_index');
+										  const index = store.index('date');
 										  // Assumes you have an index on date and assignment
 										  
-										  const query = IDBKeyRange.only([date, summary]);
+										  const query = IDBKeyRange.only([date]);
 										  const request = index.get(query);
 										  
 										  return new Promise((resolve,reject)=>{
@@ -519,62 +519,44 @@ function formatDate(date) {
 										  
 										  if (todayAssignment) {
 										  // Assignment for today exists in IndexedDB
-										  document.getElementById('assignmentInput').value = todayAssignment.assignment;
-										  //NOw check if this date has any stored assignments, if yes - then display that into storedassignmentinput. 
-										  getRecordsByDate(formattedToday, function(records) {
-														   if (records.length>1){
-														   records.forEach(function(record) {
-																		   
-																		   // Process each record as needed
-																		   })
-														   
-														   
-														   } else {
-														   //one record exists for this day - let's get it and update our display
-														   if (records.clockOutTime){
-														   document.getElementById('ClockOutTimeInput').value = records.clockOutTime;
-														   
-														   document.getElementById('clockOutButton').innerHTML = "Clocked Out";
-														   }
-														   document.getElementById('ClockInTimeInput').value = records.clockInTime;
-														   document.getElementById('clockInButton').innerHTML = "Clocked In";
-														   document.getElementById('storedassignmentInput').value=records.assignment;
-														   };
-														   
-														   
-														   
-														   
-														   
-														   
-														   
-														   });
+										  document.getElementById('assignmentInput').value = todayAssignment.assignment; }
+										  //NOw check if this date has any stored assignments, clockedin clocked out, if yes - then display that
+
+										  
+										  getAssignmentsByDate(formattedToday).then((result) => {
+																					if (result){
+										if (result.length>1){
+												result.forEach(function(individualresult) {
+												console.log(individualresult);
+												// Process each record as needed
+												})
+																					
+																					} else {
+																					
+																					if (result.clockInTime){
+																					document.getElementById('clockInButton').innerHTML = "Clocked In";
+																					document.getElementById('ClockInTimeInput').value=result.clockInTime;
+																					
+																					}
+																					if (result.clockOutTime){
+																					document.getElementById('clockOutButton').innerHTML = "Clocked Out";
+																					document.getElementById('ClockOutTimeInput').value=result.clockOutTime;							
+																					
+																					} if result.assignment{document.getElementById('storedassignmentInput').value = result.assignment}
+																					}
+																					
+																					
+																					}
+																					
+																				//No result - set the assignment to Qgenda
+																					document.getElementById('storedassignmentInput').value = todayAssignment.assignment;	
+																					}
+																					).catch((error) => {
+																							console.error(error);
+																							});
 										  
 										  
-										  //check if already clocked in clocked out for today for this assignment and set display accordingly
 										  
-										  getAssignmentByDateAndSummary(formattedToday,document.getElementById('assignmentInput').value).then((result) => {
-																											if (result) {
-																											//console.log('Assignment found:', result);
-																														if (result.clockInTime){document.getElementById('clockInButton').innerHTML = "Clocked In";
-																														document.getElementById('ClockInTimeInput').value=result.clockInTime;
-																														if (result.clockOutTime){
-																														document.getElementById('clockOutButton').innerHTML = "Clocked Out";
-																														document.getElementById('ClockOutTimeInput').value=result.clockOutTime;							
-																														
-																														}
-																														}
-																														
-																														
-																														} else {
-																											console.log('Assignment not found');
-																											}
-																											}).catch((error) => {
-																													 console.error(error);
-																													 });
-										  
-									
-										  } else {//Assignment for the date not in Database
-										  }
 										  } catch (error) {
 										  console.error('Error displaying today\'s assignment:', error);
 										  }
