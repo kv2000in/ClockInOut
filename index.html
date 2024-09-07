@@ -67,7 +67,7 @@ function initDB(callback) {
 		console.log("Persistent storage is not supported by this browser.");
 	}
 	
-	const request = indexedDB.open(dbName, 1);
+	const request = indexedDB.open(dbName, 2);
 	
 	request.onupgradeneeded = function(event) {
 		db = event.target.result;
@@ -83,10 +83,8 @@ function initDB(callback) {
 		}
 		
 			// Add the index on date and assignment
-		if (!clockStore.indexNames.contains('date_assignment_index')) {
-			clockStore.createIndex('date_assignment_index', ['date', 'assignment'], {
-								   unique: true
-								   });
+		if (!clockStore.indexNames.contains('date_index')) {
+			
 			clockStore.createIndex('date_index', ['date'], {
 								   unique: false
 								   })
@@ -521,17 +519,41 @@ function formatDate(date) {
 										  // Assignment for today exists in IndexedDB
 										  document.getElementById('assignmentInput').value = todayAssignment.assignment; }
 										  //NOw check if this date has any stored assignments, clockedin clocked out, if yes - then display that
-
+										  document.getElementById('storedassignmentInput').value = todayAssignment.assignment;
 										  
 										  getAssignmentsByDate(formattedToday).then((result) => {
 																					if (result){
-										if (result.length>1){
+																				const mytable=	document.createElement("table");
 												result.forEach(function(individualresult) {
 												console.log(individualresult);
 												// Process each record as needed
-												})
+															   const myrow=document.createElement("tr");
+															   for (const cell of [
+																				   individualresult.id,
+																				   individualresult.date,
+																				   individualresult.assignment,
+																				   individualresult.clockInTime,
+																				   individualresult.clockOutTime,
+																				   	"	
+																				   ]) {
+															   const tableCell = document.createElement("td");
+															   tableCell.textContent = cell;
+															   myrow.appendChild(tableCell);
+															   }
+															   const mytd = document.createElement("td");
+															   mytd.textContent="Edit";
+															   myrow.appendChild(mytd);
+															   mytable.appendChild(myrow);
+
+															   
+															   
+															   
+															   
+															   
+															   
+															   
 																					
-																					} else {
+																					
 																					
 																					if (result.clockInTime){
 																					document.getElementById('clockInButton').innerHTML = "Clocked In";
@@ -543,13 +565,13 @@ function formatDate(date) {
 																					document.getElementById('ClockOutTimeInput').value=result.clockOutTime;							
 																					
 																					} if result.assignment{document.getElementById('storedassignmentInput').value = result.assignment}
-																					}
+																					
 																					
 																					
 																					}
 																					
 																				//No result - set the assignment to Qgenda
-																					document.getElementById('storedassignmentInput').value = todayAssignment.assignment;	
+																						
 																					}
 																					).catch((error) => {
 																							console.error(error);
