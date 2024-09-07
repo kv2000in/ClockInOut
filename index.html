@@ -362,7 +362,7 @@ function formatDate(date) {
 										   */
 										  
 										  async function clockIn() {
-										  const assignment = document.getElementById('assignmentInput').value;
+										  const assignment = document.getElementById('storedassignmentInput').value;
 										  const dateTime = document.getElementById('dateTimeInput').value;
 										  
 										  const formattedToday = formatQDate(formatDateTime(dateTime)); //Date of interest
@@ -433,7 +433,7 @@ function formatDate(date) {
 										  
 										  async function clockOut() {
 										
-										  const assignment = document.getElementById('assignmentInput').value;
+										  const assignment = document.getElementById('storedassignmentInput').value
 										  const dateTime = document.getElementById('dateTimeInput').value;
 										  
 										  const formattedToday = formatQDate(formatDateTime(dateTime)); //Date of interest
@@ -522,10 +522,31 @@ function formatDate(date) {
 										  document.getElementById('assignmentInput').value = todayAssignment.assignment;
 										  //NOw check if this date has any stored assignments, if yes - then display that into storedassignmentinput. 
 										  getRecordsByDate(formattedToday, function(records) {
+														   if (records.length>1){
 														   records.forEach(function(record) {
-																		   console.log('Record:', record);
+																		   
 																		   // Process each record as needed
-																		   });
+																		   })
+														   
+														   
+														   } else {
+														   //one record exists for this day - let's get it and update our display
+														   if (records.clockOutTime){
+														   document.getElementById('ClockOutTimeInput').value = records.clockOutTime;
+														   
+														   document.getElementById('clockOutButton').innerHTML = "Clocked Out";
+														   }
+														   document.getElementById('ClockInTimeInput').value = records.clockInTime;
+														   document.getElementById('clockInButton').innerHTML = "Clocked In";
+														   document.getElementById('storedassignmentInput').value=records.assignment;
+														   };
+														   
+														   
+														   
+														   
+														   
+														   
+														   
 														   });
 										  
 										  
@@ -562,19 +583,24 @@ function formatDate(date) {
 										  function getRecordsByDate(date, callback) {
 										  const store = getTransaction(clockstoreName, 'readonly');
 										  const index = store.index('date_index');
-										  
+										 
 										  // Query by date
-										  const keyRange = IDBKeyRange.only(date);
-										  const request = index.getAll(keyRange);
 										  
+										  const keyRange = IDBKeyRange.only([date]);
+										  
+										  //const request = index.openKeyCursor(keyRange);
+										  const request = index.getAll(keyRange);
 										  request.onsuccess = function(event) {
-										  const records = event.target.result;
-										  callback(records); // Handle the array of records
-										  };
+										  const records = event.target.result; console.log(records);
+										  if (records) { callback(records);} else {console.log ("No records");}
+										  // Handle the array of records
+										  }
+										  ;
 										  
 										  request.onerror = function(event) {
 										  console.error('Error fetching records by date:', event.target.errorCode);
-										  };
+										  }
+										  ;
 										  }
 
 										  
