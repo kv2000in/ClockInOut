@@ -325,7 +325,7 @@ function formatDate(date) {
 										  
 										  function getAssignmentsByDate(date) {
 										  const store = getTransaction(clockstoreName, 'readonly');
-										  const index = store.index('date');
+										  const index = store.index('date_index');
 										  // Assumes you have an index on date and assignment
 										  
 										  const query = IDBKeyRange.only([date]);
@@ -359,7 +359,7 @@ function formatDate(date) {
 										   
 										   */
 										  
-										  async function clockIn() {
+										  async function editTimes() {
 										  const assignment = document.getElementById('storedassignmentInput').value;
 										  const dateTime = document.getElementById('dateTimeInput').value;
 										  
@@ -369,10 +369,10 @@ function formatDate(date) {
 										  //Check if a record exists for this date and assignment
 										  
 										  const store = getTransaction(clockstoreName, 'readwrite');
-										  const index = store.index('date_assignment_index');
+										  const index = store.index('date_index');
 										  // Assumes you have an index on date and assignment
 										  
-										  const query = IDBKeyRange.only([formattedToday, assignment]);
+										  const query = IDBKeyRange.only([formattedToday]);
 										  const request = index.get(query);
 										  
 										  
@@ -408,20 +408,21 @@ function formatDate(date) {
 										  
 										  }
 										  }
-															 ;
-										request.onerror = function(event) {
-															 console.log('Failed to retrieve assignment');
-										  //No record exists for this date and assignment
+										  async function clockIn() {
+										  const assignment = document.getElementById('storedassignmentInput').value;
+										  const dateTime = document.getElementById('dateTimeInput').value;
 										  
-										  				 
+										  const formattedToday = formatQDate(formatDateTime(dateTime)); //Date of interest
 										  
-										  }
-															 ;
-															 
-															 
+										  if (assignment && dateTime) {
+										  //Check if a record exists for this date and assignment
 										  
-										  
-										  
+										  const store = getTransaction(clockstoreName, 'readwrite');
+										store.put({date:formattedToday,
+													// clockInTime: new Date(dateTime).toLocaleString(),
+													clockInTime: document.getElementById('ClockInTimeInput').value,
+													assignment: assignment,
+												  clockOutTime: null,});
 										  document.getElementById('clockInButton').innerHTML = "Clocked In";
 										
 										  } else {
