@@ -54,17 +54,34 @@ const calstoreName = 'calStore'; //calendar related items
 let db;
 
 function initDB() {
-	const request = indexedDB.open(dbName, 1);
+	const request = indexedDB.open(dbName, 2);
 	//no existing database with the specified name), the onupgradeneeded event is triggered.
 	//onupgradeneeded event is also triggered if you open a database with a version number higher than the currently existing database version
 	request.onupgradeneeded = function(event) {
 		db = event.target.result;
+		let clockStore;
 		if (!db.objectStoreNames.contains(clockstoreName)) {
-			db.createObjectStore(clockstoreName, { keyPath: 'id', autoIncrement: true });
+			clockStore = db.createObjectStore(clockstoreName, {
+											  keyPath: 'id',
+											  autoIncrement: true
+											  });
+		} else {
+			clockStore = request.transaction.objectStore(clockstoreName);
+		}
+		
+			// Add the index on date and assignment
+		if (!clockStore.indexNames.contains('date_index')) {
+			
+			clockStore.createIndex('date_index', ['date'], {
+								   unique: false
+								   })
 		}
 		
 		if (!db.objectStoreNames.contains(calstoreName)) {
-			db.createObjectStore(calstoreName, { keyPath: 'id', autoIncrement: true });
+			db.createObjectStore(calstoreName, {
+								 keyPath: 'id',
+								 autoIncrement: true
+								 });
 		}
 	};
 	
