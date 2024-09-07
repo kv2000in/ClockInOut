@@ -517,10 +517,10 @@ function formatDate(date) {
 										  
 										  if (todayAssignment) {
 										  // Assignment for today exists in IndexedDB
-										  document.getElementById('assignmentInput').value = todayAssignment.assignment; }
+										  document.getElementById('assignmentInput').value = todayAssignment.assignment; 
 										  //NOw check if this date has any stored assignments, clockedin clocked out, if yes - then display that
 										  document.getElementById('storedassignmentInput').value = todayAssignment.assignment;
-										  
+										  }
 										  getAssignmentsByDate(formattedToday).then((result) => {
 																					if (result){
 																				const mytable=	document.createElement("table");
@@ -556,7 +556,7 @@ function formatDate(date) {
 																					//No result
 																					
 																					}
-																					).catch((error) => {
+																					}).catch((error) => {
 																							console.error(error);
 																							});
 										  
