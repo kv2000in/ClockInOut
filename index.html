@@ -32,6 +32,7 @@ width: 100%;
 <input type="datetime-local" id="dateTimeInput">
 <input type="hidden" id="assignmentInput" placeholder="Enter your assignment">
 <input type="text" id="storedassignmentInput" placeholder="Enter your assignment">
+<table id = "mytable"></table>
 <input type="datetime-local" id="ClockInTimeInput">
 <button id="clockInButton" onclick="clockIn()">Clock In</button>
 <input type="datetime-local" id="ClockOutTimeInput">
@@ -329,7 +330,7 @@ function formatDate(date) {
 										  // Assumes you have an index on date and assignment
 										  
 										  const query = IDBKeyRange.only([date]);
-										  const request = index.get(query);
+										  const request = index.getAll(query);
 										  
 										  return new Promise((resolve,reject)=>{
 															 request.onsuccess = function(event) {
@@ -526,7 +527,7 @@ function formatDate(date) {
 										  }
 										  getAssignmentsByDate(formattedToday).then((result) => {
 																					if (result){
-																				const mytable=	document.createElement("table");
+																				const mytable=	document.getElementById("mytable");
 												result.forEach(function(individualresult) {
 												console.log(individualresult);
 												// Process each record as needed
