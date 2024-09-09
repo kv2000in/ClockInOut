@@ -49,8 +49,9 @@ width: 100%;
 </div>
 
 <!-- HTML for the modal -->
-<div id="dateTimeModal" style="display:none;">
-<label for="dateTimeInput">Enter date and time:</label>
+<!-- HTML for the modal -->
+<div id="dateTimeModal" style="display:none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border: 1px solid #ccc; padding: 20px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); z-index: 1000;">
+<label for="dateTimeInputModal">Enter date and time:</label>
 <input type="datetime-local" id="dateTimeInputModal" />
 <button onclick="saveDateTime()">Save</button>
 <button onclick="closeDateTimeModal()">Cancel</button>
@@ -373,6 +374,19 @@ function formatDate(date) {
 										  let currentPrimaryKey;
 										  let currentWhichTime;
 										  
+										  
+										  function saveDateTime() {
+										  const dateTimeInput = document.getElementById('dateTimeInputModal').value;
+										  if (dateTimeInput) {
+										  updateRecord(currentPrimaryKey, currentWhichTime, dateTimeInput);
+										  }
+										  closeDateTimeModal();
+										  }
+										  
+										  function closeDateTimeModal() {
+										  document.getElementById('dateTimeModal').style.display = 'none';
+										  }
+										  
 										  async function editTimes(primaryKey, whichTime) {
 										  currentPrimaryKey = primaryKey;
 										  currentWhichTime = whichTime;
@@ -388,18 +402,7 @@ function formatDate(date) {
 										  const dateTimeInput = document.getElementById('dateTimeInputModal');
 										  dateTimeInput.value = whichTime === 'clockIn' ? record.clockInTime || localDateTime : record.clockOutTime || localDateTime;
 										  }
-										  
-										  function saveDateTime() {
-										  const dateTimeInput = document.getElementById('dateTimeInputModal').value;
-										  if (dateTimeInput) {
-										  updateRecord(currentPrimaryKey, currentWhichTime, dateTimeInput);
-										  }
-										  closeDateTimeModal();
-										  }
-										  
-										  function closeDateTimeModal() {
-										  document.getElementById('dateTimeModal').style.display = 'none';
-										  }
+
 										  
 										  async function updateRecord(primaryKey, whichTime, selectedDateTime) {
 										  const store = getTransaction(clockstoreName, 'readwrite');
@@ -594,7 +597,8 @@ function formatDate(date) {
 										  document.getElementById('clockInButton').disabled = false;
 										  document.getElementById('clockOutButton').disabled = false;
 										  document.getElementById('storedassignmentInput').value = null;
-										  document.getElementById('clockInOut').style="display:block";
+										  document.getElementById('clockInOut').style.display = "block"; // Ensure clockInOut is visible
+										  
 										  // Get today's date input value
 										  const mydate = document.getElementById('dateTimeInput').value;
 										  const formattedToday = formatQDate(formatDateTime(mydate));
@@ -614,8 +618,10 @@ function formatDate(date) {
 										  const mytable = document.getElementById("mytable");
 										  mytable.textContent = ""; // Clear existing table contents
 										  
-										  if (result) {
-										  document.getElementById('clockInOut').style="display:none";
+										  if (result && result.length > 0) {
+										  // If there are results, hide the clockInOut section
+										  document.getElementById('clockInOut').style.display = "none";
+										  
 										  result.forEach(function (individualresult) {
 														 console.log(individualresult);
 														 
@@ -685,12 +691,15 @@ function formatDate(date) {
 														 mytable.appendChild(myrow);
 														 });
 										  } else {
+										  // If no results, ensure clockInOut is visible
+										  document.getElementById('clockInOut').style.display = "block";
 										  console.log("No assignments found for today.");
 										  }
 										  } catch (error) {
 										  console.error('Error displaying today\'s assignment:', error);
 										  }
 										  }
+
 
 										  async function deleteRecord(primaryKey) {
 										  const store = getTransaction(clockstoreName, 'readwrite'); // Open a readwrite transaction
