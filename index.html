@@ -311,7 +311,10 @@ function formatDateTo7AM(dateString) {
 	return `${dateString}T07:00:00`;
 }
 
-
+function formatDateTo5PM(dateString) {
+		// Directly append the time to the provided date string, assuming it's in the format 'YYYY-MM-DD'
+	return `${dateString}T17:00:00`;
+}
 										  
 										  function getLastWeekRecords() {
 										  const endDate = new Date();
@@ -480,7 +483,8 @@ function formatDateTo7AM(dateString) {
 										  if (record) {
 										  // Update the record with clockInTime
 										  record.clockInTime = localDateTime; // Current time
-										  
+											// redundant to update the assignemnt here as well but just in case the user happens to click the clockin or clockout faster than the debounce time of 500 ms - it will capture the updated assignment here.
+										record.assignment = document.getElementById('storedassignmentinput'+primaryKey).value;
 										  // Save the updated record back into the object store
 										  const updateRequest = store.put(record);
 										  
@@ -505,7 +509,7 @@ function formatDateTo7AM(dateString) {
 										  const assignment = document.getElementById('storedassignmentInput').value;
 										  const formattedToday = document.getElementById('dateTimeInput').value;
 										  
-										  if (assignment && formattedToday) {
+										  if (formattedToday) {
 										  const newStore = getTransaction(clockstoreName, 'readwrite');
 										  newStore.put({
 													   date: formattedToday,
@@ -537,7 +541,8 @@ function formatDateTo7AM(dateString) {
 										  if (record) {
 										  // Update the record with clockOutTime
 											  record.clockOutTime = document.getElementById('ClockOutTimeInput'+primaryKey).value;
-										  
+										// redundant to update the assignemnt here as well but just in case the user happens to click the clockin or clockout faster than the debounce time of 500 ms - it will capture the updated assignment here.
+											  record.assignment = document.getElementById('storedassignmentinput'+primaryKey).value;
 										  // Save the updated record back into the object store
 										  const updateRequest = store.put(record);
 										  
@@ -562,7 +567,7 @@ function formatDateTo7AM(dateString) {
 										  const assignment = document.getElementById('storedassignmentInput').value;
 										  const formattedToday = document.getElementById('dateTimeInput').value;
 										  
-										  if (assignment && formattedToday) {
+										  if (formattedToday) {
 											   
 										  const newStore = getTransaction(clockstoreName, 'readwrite');
 											  newStore.put({
@@ -585,7 +590,34 @@ function formatDateTo7AM(dateString) {
 										  };
 										  }
 
-
+async function handleUpdatedAssignment(primaryKey){
+	const store = getTransaction(clockstoreName, 'readwrite');
+	const request = store.get(primaryKey);
+	
+	request.onsuccess = function(event) {
+		const record = event.target.result;
+		if (record) {
+				// Update the record with clockOutTime
+			record.assignment = document.getElementById('storedassignmentinput'+primaryKey).value;
+			
+				// Save the updated record back into the object store
+			const updateRequest = store.put(record);
+			
+			updateRequest.onsuccess = function(event) {
+				console.log("Assignment updated");
+			};
+			updateRequest.onerror = function(event) {
+				console.error('Error updating record:', event.target.errorCode);
+			};
+		}else {
+			console.log('Record not found');
+		}
+	};
+		request.onerror = function(event) {
+			console.log('Failed to retrieve record:', event.target.errorCode);
+		};
+	
+}
 										  
 										  async function displayTodaysAssignment() {
 										  // Clear and reset the clock in/clock out times and buttons
@@ -629,14 +661,23 @@ function formatDateTo7AM(dateString) {
 														 for (const cell of [
 																			 //individualresult.id,
 																			 individualresult.date,
-																			 individualresult.assignment
 																			 ]) {
 														 const tableCell = document.createElement("td");
 														 tableCell.textContent = cell;
 														 myrow.appendChild(tableCell);
 														 }
+														 //Assignment Cell
+														 const assignmentCell = document.createElement("td");
+														 assignmentCell.id = "assignment" + individualresult.id; // Add unique ID
+														 const assignmentInputfromTable = document.createElement("input");
+														 assignmentInputfromTable.type="text";
+														 assignmentInputfromTable.id="storedassignmentInput"+individualresult.id;
+														 assignmentInputfromTable.value=individualresult.assignment;
+														 assignmentInputfromTable.oninput = () => debounce(function() {handleUpdatedAssignment(individualresult.id);}, 500));
 														 
-														 // Clock In Time Cell
+											  assignmentCell.appendChild(assignmentInputfromTable);
+														myrow.appendChild(assignmentCell);
+												  		// Clock In Time Cell
 														 const clockInCell = document.createElement("td");
 														 clockInCell.id = "clockIn" + individualresult.id; // Add unique ID
 														 
