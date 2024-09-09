@@ -672,12 +672,13 @@ function formatDateTo7AM(dateString) {
 														 const ClockOutTimeInputfromTable = document.createElement("input");
 														 ClockOutTimeInputfromTable.type="datetime-local";
 														 ClockOutTimeInputfromTable.id="ClockOutTimeInput"+ individualresult.id;
+														 ClockOutTimeInputfromTable.value = localDateTime;
 														 const clockOutButton = document.createElement("button");
 														 clockOutButton.textContent = "Clock Out";
 														 clockOutButton.onclick = () => clockOut(individualresult.id); // Pass the id to clockOut
 														 clockOutCell.appendChild(ClockOutTimeInputfromTable);
 														 clockOutCell.appendChild(clockOutButton);
-														 document.getElementById('ClockOutTimeInput'+individualresult.id).value = localDateTime;
+														 
 														 }
 														 myrow.appendChild(clockOutCell);
 														 
