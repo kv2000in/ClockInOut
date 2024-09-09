@@ -484,7 +484,7 @@ function formatDateTo5PM(dateString) {
 										  // Update the record with clockInTime
 										  record.clockInTime = localDateTime; // Current time
 											// redundant to update the assignemnt here as well but just in case the user happens to click the clockin or clockout faster than the debounce time of 500 ms - it will capture the updated assignment here.
-										record.assignment = document.getElementById('storedassignmentinput'+primaryKey).value;
+										record.assignment = document.getElementById('storedassignmentInput'+primaryKey).value;
 										  // Save the updated record back into the object store
 										  const updateRequest = store.put(record);
 										  
@@ -542,7 +542,7 @@ function formatDateTo5PM(dateString) {
 										  // Update the record with clockOutTime
 											  record.clockOutTime = document.getElementById('ClockOutTimeInput'+primaryKey).value;
 										// redundant to update the assignemnt here as well but just in case the user happens to click the clockin or clockout faster than the debounce time of 500 ms - it will capture the updated assignment here.
-											  record.assignment = document.getElementById('storedassignmentinput'+primaryKey).value;
+											  record.assignment = document.getElementById('storedassignmentInput'+primaryKey).value;
 										  // Save the updated record back into the object store
 										  const updateRequest = store.put(record);
 										  
@@ -598,7 +598,7 @@ async function handleUpdatedAssignment(primaryKey){
 		const record = event.target.result;
 		if (record) {
 				// Update the record with clockOutTime
-			record.assignment = document.getElementById('storedassignmentinput'+primaryKey).value;
+			record.assignment = document.getElementById('storedassignmentInput'+primaryKey).value;
 			
 				// Save the updated record back into the object store
 			const updateRequest = store.put(record);
