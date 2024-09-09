@@ -532,63 +532,164 @@ function formatDateTo5PM(dateString) {
 
 
 										  
-										  async function clockOut(primaryKey) {
-										  const store = getTransaction(clockstoreName, 'readwrite');
-										  const request = store.get(primaryKey);
-										  
-										  request.onsuccess = function(event) {
-										  const record = event.target.result;
-										  if (record) {
-										  // Update the record with clockOutTime
-											  record.clockOutTime = document.getElementById('ClockOutTimeInput'+primaryKey).value;
-										// redundant to update the assignemnt here as well but just in case the user happens to click the clockin or clockout faster than the debounce time of 500 ms - it will capture the updated assignment here.
-											  record.assignment = document.getElementById('storedassignmentInput'+primaryKey).value;
-										  // Save the updated record back into the object store
-										  const updateRequest = store.put(record);
-										  
-										  updateRequest.onsuccess = function(event) {
-										  // Update the UI after successful clock out
-										  const clockOutCell = document.getElementById('clockOut' + primaryKey);
-										  clockOutCell.textContent = document.getElementById('ClockOutTimeInput'+primaryKey).value + " ";
-										  
-										  // Add the Edit button next to the clockOut time
-										  const editButton = document.createElement("button");
-										  editButton.textContent = "Edit";
-										  editButton.onclick = () => editTimes(primaryKey, "clockOut"); // Pass the id to editTimes
-										  clockOutCell.appendChild(editButton);
-										  };
-										  
-										  updateRequest.onerror = function(event) {
-										  console.error('Error updating record:', event.target.errorCode);
-										  };
-										  } else {
-										  console.log('Record not found');
-										  // Handle case where the record does not exist
-										  const assignment = document.getElementById('storedassignmentInput').value;
-										  const formattedToday = document.getElementById('dateTimeInput').value;
-										  
-										  if (formattedToday) {
-											   
-										  const newStore = getTransaction(clockstoreName, 'readwrite');
-											  newStore.put({
-														   date: formattedToday,
-														   clockInTime: formatDateTo7AM(formattedToday),//Set default clock In time to 7 am. User is able to edit it as needed.
-														   assignment: assignment,
-														   clockOutTime: document.getElementById('ClockOutTimeInput').value, // Use localDateTime here for consistency
-														   });
-											  
-											  displayTodaysAssignment();
-											  
-											 } else {
-										  alert('Please enter your assignment and select a date/time.');
-										  }
-										  }
-										  };
-										  
-										  request.onerror = function(event) {
-										  console.log('Failed to retrieve record:', event.target.errorCode);
-										  };
-										  }
+	// Global variables for session pay rates
+const callRate = 200; // Example rate, update accordingly
+const nonCallRate = 250; // Example rate, update accordingly
+
+async function clockOut(primaryKey) {
+	const store = getTransaction(clockstoreName, 'readwrite');
+	if (!store) {
+		alert('Database store is not available. Please try again later.');
+		return;
+	}
+	
+	const request = store.get(primaryKey);
+	
+	request.onsuccess = function(event) {
+		const record = event.target.result;
+		if (record) {
+			const clockOutTimeInput = document.getElementById('ClockOutTimeInput' + primaryKey);
+			if (!clockOutTimeInput || !clockOutTimeInput.value) {
+				alert("Please provide a valid clock-out time.");
+				return;
+			}
+			
+			const clockOutTime = clockOutTimeInput.value;
+			const clockInTime = record.clockInTime ? new Date(record.clockInTime) : formatDateTo7AM(record.date);
+			
+				// Validation: clockOutTime must be at least 30 minutes after clockInTime
+			const clockOut = new Date(clockOutTime);
+			if ((clockOut - clockInTime) < (30 * 60 * 1000)) {
+				alert("Clock out time must be at least 30 minutes after clock in time.");
+				return;
+			}
+			
+				// Update the record with clockOutTime
+			record.clockOutTime = clockOutTime;
+			record.assignment = document.getElementById('storedassignmentInput' + primaryKey).value;
+			
+				// Calculate hours worked
+			record.hoursWorked = calculateHoursWorked(clockInTime, clockOut);
+			
+				// Calculate overtime
+			record.overtime = calculateOvertime(clockOut, record.assignment, record.date, clockInTime);
+			
+				// Calculate session pay
+			record.sessionPay = calculateSessionPay(record.overtime, record.assignment);
+			
+				// Save the updated record back into the object store
+			const updateRequest = store.put(record);
+			
+			updateRequest.onsuccess = function(event) {
+					// Update the UI after successful clock out
+				const clockOutCell = document.getElementById('clockOut' + primaryKey);
+				clockOutCell.textContent = clockOutTime + " ";
+				
+					// Add the Edit button next to the clockOut time
+				const editButton = document.createElement("button");
+				editButton.textContent = "Edit";
+				editButton.onclick = () => editTimes(primaryKey, "clockOut");
+				clockOutCell.appendChild(editButton);
+			};
+			
+			updateRequest.onerror = function(event) {
+				console.error('Error updating record:', event.target.errorCode);
+			};
+		} else {
+			console.log('Record not found');
+			const assignmentInput = document.getElementById('storedassignmentInput');
+			const dateTimeInput = document.getElementById('dateTimeInput');
+			
+			if (!assignmentInput || !dateTimeInput) {
+				alert('Please enter your assignment and select a date/time.');
+				return;
+			}
+			
+			const assignment = assignmentInput.value;
+			const formattedToday = dateTimeInput.value;
+			
+			if (formattedToday) {
+				const newStore = getTransaction(clockstoreName, 'readwrite');
+				if (!newStore) {
+					alert('Database store is not available. Please try again later.');
+					return;
+				}
+				
+				const clockOutTime = document.getElementById('ClockOutTimeInput').value;
+				const clockInTime = formatDateTo7AM(formattedToday);
+				const clockOut = new Date(clockOutTime);
+				if ((clockOut - clockInTime) < (30 * 60 * 1000)) {
+					alert("Clock out time must be at least 30 minutes after clock in time.");
+					return;
+				}
+				
+				const overtime = calculateOvertime(clockOut, assignment, formattedToday, clockInTime);
+				
+				newStore.put({
+							 date: formattedToday,
+							 clockInTime: clockInTime, // Default clock in time 7 AM
+							 assignment: assignment,
+							 clockOutTime: clockOutTime,
+							 hoursWorked: calculateHoursWorked(clockInTime, clockOut),
+							 overtime: overtime,
+							 sessionPay: calculateSessionPay(overtime, assignment),
+							 });
+				
+				displayTodaysAssignment();
+			} else {
+				alert('Please enter your assignment and select a date/time.');
+			}
+		}
+	};
+	
+	request.onerror = function(event) {
+		console.log('Failed to retrieve record:', event.target.errorCode);
+	};
+}
+
+
+	// Function to calculate hours worked in 15-minute increments
+function calculateHoursWorked(clockInTime, clockOutTime) {
+	const diff = clockOutTime - clockInTime; // Difference in milliseconds
+	const diffInMinutes = Math.round(diff / (1000 * 60)); // Difference in minutes
+	const roundedMinutes = Math.ceil(diffInMinutes / 15) * 15; // Round up to nearest 15 minutes
+	const hoursWorked = roundedMinutes / 60; // Convert to hours
+	return hoursWorked;
+}
+
+	// Function to calculate overtime based on assignment and clockOutTime
+function calculateOvertime(clockOutTime, assignment, date, clockInTime) {
+	const formattedToday = new Date(date);
+	const endOfDay = new Date(formattedToday);
+	endOfDay.setHours(17, 0, 0, 0); // 5 PM
+	
+	let overtime = 0;
+	
+	if (assignment.includes("CC")) {
+		const nextDay = new Date(formattedToday);
+		nextDay.setDate(nextDay.getDate() + 1);
+		nextDay.setHours(1, 0, 0, 0); // 1 AM of next day
+		if (clockOutTime > nextDay) {
+			overtime = Math.max((clockOutTime - nextDay) / (1000 * 60 * 60), 0); // Hours in overtime
+		}
+		if (clockInTime < new Date(formattedToday.setHours(14, 0, 0, 0))) {
+			overtime += Math.max((14 - 7), 0); // If clock-in before 2 PM, add hours before 7 AM
+		}
+	} else {
+		if (clockOutTime > endOfDay) {
+			overtime = Math.max((clockOutTime - endOfDay) / (1000 * 60 * 60), 0); // Hours in overtime
+		}
+	}
+	
+	return Math.ceil(overtime * 4) / 4; // Round to nearest 15 minutes
+}
+
+	// Function to calculate session pay based on overtime and assignment
+function calculateSessionPay(overtime, assignment) {
+	const rate = (assignment.includes("C1M") || assignment.includes("CC")) ? callRate : nonCallRate;
+	return overtime * rate;
+}
+
 
 // Create a debounced version of handleUpdatedAssignment
 const debouncedHandleUpdatedAssignment = debounce(handleUpdatedAssignment, 500);
