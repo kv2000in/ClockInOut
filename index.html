@@ -597,7 +597,7 @@ function formatDate(date) {
 										  document.getElementById('clockInButton').disabled = false;
 										  document.getElementById('clockOutButton').disabled = false;
 										  document.getElementById('storedassignmentInput').value = null;
-										  document.getElementById('clockInOut').style.display = "block"; // Ensure clockInOut is visible
+										  //document.getElementById('clockInOut').style.display = "block"; // Ensure clockInOut is visible
 										  
 										  // Get today's date input value
 										  const mydate = document.getElementById('dateTimeInput').value;
@@ -620,7 +620,7 @@ function formatDate(date) {
 										  
 										  if (result && result.length > 0) {
 										  // If there are results, hide the clockInOut section
-										  document.getElementById('clockInOut').style.display = "none";
+										  //document.getElementById('clockInOut').style.display = "none";
 										  
 										  result.forEach(function (individualresult) {
 														 console.log(individualresult);
@@ -692,7 +692,7 @@ function formatDate(date) {
 														 });
 										  } else {
 										  // If no results, ensure clockInOut is visible
-										  document.getElementById('clockInOut').style.display = "block";
+										  //document.getElementById('clockInOut').style.display = "block";
 										  console.log("No assignments found for today.");
 										  }
 										  } catch (error) {
