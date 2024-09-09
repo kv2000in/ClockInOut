@@ -601,10 +601,10 @@ function formatDateTo7AM(dateString) {
 										  // Clear and reset the clock in/clock out times and buttons
 										  const now = new Date();
 										  const localDateTime = formatDateTime(now);
-										  
+										  const formattedToday = document.getElementById('dateTimeInput').value;
 										  // Reset clockIn, clockOut times and buttons
 										  document.getElementById('ClockOutTimeInput').value = localDateTime;
-										  document.getElementById('ClockInTimeInput').value = localDateTime;
+										  document.getElementById('ClockInTimeInput').value = formatDateTo7AM(formattedToday); // set it to the day of assignments 7 am
 										  document.getElementById('storedassignmentInput').value = null;
 										  //document.getElementById('clockInOut').style.display = "block"; // Ensure clockInOut is visible
 										  
