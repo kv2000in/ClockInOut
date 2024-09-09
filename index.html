@@ -590,6 +590,10 @@ function formatDateTo5PM(dateString) {
 										  };
 										  }
 
+// Create a debounced version of handleUpdatedAssignment
+const debouncedHandleUpdatedAssignment = debounce(handleUpdatedAssignment, 500);
+
+
 async function handleUpdatedAssignment(primaryKey){
 	const store = getTransaction(clockstoreName, 'readwrite');
 	const request = store.get(primaryKey);
@@ -673,7 +677,7 @@ async function handleUpdatedAssignment(primaryKey){
 														 assignmentInputfromTable.type="text";
 														 assignmentInputfromTable.id="storedassignmentInput"+individualresult.id;
 														 assignmentInputfromTable.value=individualresult.assignment;
-														 assignmentInputfromTable.oninput = () => debounce(function() {handleUpdatedAssignment(individualresult.id);}, 500);
+														 assignmentInputfromTable.oninput = () => debouncedHandleUpdatedAssignment(individualresult.id);
 														 
 											  assignmentCell.appendChild(assignmentInputfromTable);
 														myrow.appendChild(assignmentCell);
