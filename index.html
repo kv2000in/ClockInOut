@@ -29,7 +29,7 @@ width: 100%;
 <div class="container">
 <h1>Clock In/Out</h1>
 <input type="text" id="qgendaurl" placeholder="Enter Qgenda Calendar URL">
-<input type="datetime-local" id="dateTimeInput">
+<input type="date" id="dateTimeInput">
 <input type="hidden" id="assignmentInput" placeholder="Enter your assignment">
 <input type="text" id="storedassignmentInput" placeholder="Enter your assignment">
 <table id="mytable"></table>
@@ -40,15 +40,15 @@ width: 100%;
 <button id="clockOutButton" onclick="clockOut('0')">Clock Out</button>
 </div>
 <h2>Get Records</h2>
-<input type="datetime-local" id="startDate">
-<input type="datetime-local" id="endDate">
+<input type="date" id="startDate">
+<input type="date" id="endDate">
 <button onclick="getRecords()">Get Records</button>
 <button onclick="getLastWeekRecords()">Last Week</button>
 <button onclick="getLastMonthRecords()">Last Month</button>
 <!-- <button onclick="clearIndexedDB()">Clear IndexedDB</button> -->
 </div>
 
-<!-- HTML for the modal -->
+
 <!-- HTML for the modal -->
 <div id="dateTimeModal" style="display:none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border: 1px solid #ccc; padding: 20px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); z-index: 1000;">
 <label for="dateTimeInputModal">Enter date and time:</label>
@@ -205,20 +205,26 @@ function handleURLupdate() {
 	}
 	
 }
-
-function handleUpdatedAssignment(mynewassignment) {
+function setCurrentLocalDate() {
+	const now = new Date();
 	
-	const mydate = document.getElementById('dateTimeInput').value;
-	const formattedToday = formatQDate(formatDateTime(mydate));
-		//Leave the Qgenda calendar alone. Handle updated assignments in clockstore
-		//updateAssignmentInDB(formattedToday,mynewassignment);
+		// Get the local year, month, and day, and format it to 'YYYY-MM-DD'
+	const year = now.getFullYear();
+	const month = String(now.getMonth() + 1).padStart(2, '0'); // Month is zero-indexed, so +1
+	const day = String(now.getDate()).padStart(2, '0');
 	
+	const localDate = `${year}-${month}-${day}`;
+	
+		// Return the value of the date input field to the local date
+	return localDate;
 }
+
+
 
 function initializeDateTimeInputs(callback) {
 	const now = new Date();
 	const localDateTime = formatDateTime(now);
-	document.getElementById('dateTimeInput').value = localDateTime;
+	document.getElementById('dateTimeInput').value = setCurrentLocalDate();
 	document.getElementById('startDate').value = localDateTime;
 	document.getElementById('endDate').value = localDateTime;
 	document.getElementById('ClockOutTimeInput').value = localDateTime;
@@ -230,8 +236,8 @@ function initializeDateTimeInputs(callback) {
 }
 
 async function getRecords() {
-	const startDate = new Date(document.getElementById('startDate').value).toLocaleString();
-	const endDate = new Date(document.getElementById('endDate').value).toLocaleString();
+	const startDate = document.getElementById('startDate').value;
+	const endDate = document.getElementById('endDate').value;
 	
 	const store = getTransaction(clockstoreName, 'readonly');
 	const request = store.getAll();
@@ -248,7 +254,7 @@ async function getRecords() {
 		}
 		
 		const csvContent = generateCSV(filteredRecords);
-		downloadCSV(csvContent, `records_ ${formatDate(startDate)}_ ${formatDate(endDate)}.csv`);
+		downloadCSV(csvContent, `records_ ${startDate}_ ${endDate}.csv`);
 	}
 	;
 }
@@ -286,10 +292,7 @@ function calculateTimeAtWork(clockInTime, clockOutTime) {
 	return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 }
 
-function formatDate(date) {
-	const d = new Date(date);
-	return d.toLocaleDateString().replace(/\//g, '');
-										  }
+
 										  
 										  function formatDateTime(inputDateTime) {
 										  const date = new Date(inputDateTime);
@@ -494,9 +497,7 @@ function formatDate(date) {
 										  console.log('Record not found');
 										  // Handle case where the record does not exist
 										  const assignment = document.getElementById('storedassignmentInput').value;
-										  const dateTime = document.getElementById('dateTimeInput').value;
-										  
-										  const formattedToday = formatQDate(formatDateTime(dateTime)); // Date of interest
+										  const formattedToday = document.getElementById('dateTimeInput').value;
 										  
 										  if (assignment && dateTime) {
 										  const newStore = getTransaction(clockstoreName, 'readwrite');
@@ -507,8 +508,7 @@ function formatDate(date) {
 													   clockOutTime: null, // Leave clockOutTime as null
 													   });
 										  
-										  document.getElementById('clockInButton').innerHTML = "Clocked In";
-										  document.getElementById('clockInButton').disabled = true;
+										  displayTodaysAssignment();
 										  } else {
 										  alert('Please enter your assignment and select a date/time.');
 										  }
@@ -556,9 +556,7 @@ function formatDate(date) {
 										  console.log('Record not found');
 										  // Handle case where the record does not exist
 										  const assignment = document.getElementById('storedassignmentInput').value;
-										  const dateTime = document.getElementById('dateTimeInput').value;
-										  
-										  const formattedToday = formatQDate(formatDateTime(dateTime)); // Date of interest
+										  const formattedToday = document.getElementById('dateTimeInput').value;
 										  
 										  if (assignment && dateTime) {
 										  const newStore = getTransaction(clockstoreName, 'readwrite');
@@ -569,8 +567,7 @@ function formatDate(date) {
 													   clockOutTime: localDateTime, // Use localDateTime here for consistency
 													   });
 										  
-										  document.getElementById('clockOutButton').innerHTML = "Clocked Out";
-										  document.getElementById('clockOutButton').disabled = true;
+										 displayTodaysAssignment();
 										  } else {
 										  alert('Please enter your assignment and select a date/time.');
 										  }
@@ -592,16 +589,12 @@ function formatDate(date) {
 										  // Reset clockIn, clockOut times and buttons
 										  document.getElementById('ClockOutTimeInput').value = localDateTime;
 										  document.getElementById('ClockInTimeInput').value = localDateTime;
-										  document.getElementById('clockInButton').innerHTML = "Clock In";
-										  document.getElementById('clockOutButton').innerHTML = "Clock Out";
-										  document.getElementById('clockInButton').disabled = false;
-										  document.getElementById('clockOutButton').disabled = false;
 										  document.getElementById('storedassignmentInput').value = null;
 										  //document.getElementById('clockInOut').style.display = "block"; // Ensure clockInOut is visible
 										  
 										  // Get today's date input value
-										  const mydate = document.getElementById('dateTimeInput').value;
-										  const formattedToday = formatQDate(formatDateTime(mydate));
+										  const formattedToday = document.getElementById('dateTimeInput').value;
+										  
 										  
 										  try {
 										  // Check if today's assignment is already in the IndexedDB
@@ -623,14 +616,14 @@ function formatDate(date) {
 										  //document.getElementById('clockInOut').style.display = "none";
 										  
 										  result.forEach(function (individualresult) {
-														 console.log(individualresult);
+														 //console.log(individualresult);
 														 
 														 // Create a new row
 														 const myrow = document.createElement("tr");
 														 myrow.id = `row${individualresult.id}`;
 														 // Append other details like id, date, assignment
 														 for (const cell of [
-																			 individualresult.id,
+																			 //individualresult.id,
 																			 individualresult.date,
 																			 individualresult.assignment
 																			 ]) {
