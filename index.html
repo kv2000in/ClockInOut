@@ -673,7 +673,7 @@ async function handleUpdatedAssignment(primaryKey){
 														 assignmentInputfromTable.type="text";
 														 assignmentInputfromTable.id="storedassignmentInput"+individualresult.id;
 														 assignmentInputfromTable.value=individualresult.assignment;
-														 assignmentInputfromTable.oninput = () => debounce(function() {handleUpdatedAssignment(individualresult.id);}, 500));
+														 assignmentInputfromTable.oninput = () => debounce(function() {handleUpdatedAssignment(individualresult.id);}, 500);
 														 
 											  assignmentCell.appendChild(assignmentInputfromTable);
 														myrow.appendChild(assignmentCell);
