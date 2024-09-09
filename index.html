@@ -433,31 +433,17 @@ function formatDate(date) {
 										  }
 										  }
 										  
-										  async function clockOut() {
-										
-										  const assignment = document.getElementById('storedassignmentInput').value
-										  const dateTime = document.getElementById('dateTimeInput').value;
-										  
-										  const formattedToday = formatQDate(formatDateTime(dateTime)); //Date of interest
-										  
-										  if (assignment && dateTime) {
-										  //Check if a record exists for this date and assignment
-										  
+										  async function clockOut(primaryKey) {
+										  const now = new Date();
+										  const localDateTime = formatDateTime(now);
 										  const store = getTransaction(clockstoreName, 'readwrite');
-										  const index = store.index('date_assignment_index');
-										  // Assumes you have an index on date and assignment
-										  
-										  const query = IDBKeyRange.only([formattedToday, assignment]);
-										  const request = index.get(query);
-										  
-										  
+										  const request = store.get(primaryKey);
 										  request.onsuccess = function(event) {
 										  const record = event.target.result;
-										  
 										  if (record) {
 										  // Modify the record as needed
 										  
-										  record.clockOutTime = document.getElementById('ClockOutTimeInput').value; // vs current time
+										  record.clockOutTime = localDateTime; // current time
 										  
 										  // Save the updated record back into the object store
 										  const updateRequest = store.put(record);
@@ -472,13 +458,7 @@ function formatDate(date) {
 										  } else {
 										  //console.log('Record not found');
 										  
-										  store.put({
-													 date:formattedToday,
-													 // clockInTime: new Date(dateTime).toLocaleString(),
-													 clockInTime: null,
-													 assignment: assignment,
-													 clockOutTime: document.getElementById('ClockOutTimeInput').value,
-													 });
+		
 										  
 										  
 										  
@@ -488,7 +468,13 @@ function formatDate(date) {
 										  request.onerror = function(event) {
 										  console.log('Failed to retrieve assignment');
 										  //No record exists for this date and assignment
-										  
+										  store.put({
+													date:formattedToday,
+													// clockInTime: new Date(dateTime).toLocaleString(),
+													clockInTime: null,
+													assignment: assignment,
+													clockOutTime: document.getElementById('ClockOutTimeInput').value,
+													});
 										  
 										  };
 										  
@@ -503,15 +489,18 @@ function formatDate(date) {
 										  }
 										  
 										  async function displayTodaysAssignment() {
-										  //clear and reset the clock in/clock out times and buttons
+										  // Clear and reset the clock in/clock out times and buttons
 										  const now = new Date();
 										  const localDateTime = formatDateTime(now);
+										  
+										  // Reset clockIn, clockOut times and buttons
 										  document.getElementById('ClockOutTimeInput').value = localDateTime;
 										  document.getElementById('ClockInTimeInput').value = localDateTime;
 										  document.getElementById('clockInButton').innerHTML = "Clock In";
 										  document.getElementById('clockOutButton').innerHTML = "Clock Out";
-										  document.getElementById('storedassignmentInput').value=null;
+										  document.getElementById('storedassignmentInput').value = null;
 										  
+										  // Get today's date input value
 										  const mydate = document.getElementById('dateTimeInput').value;
 										  const formattedToday = formatQDate(formatDateTime(mydate));
 										  
@@ -522,54 +511,91 @@ function formatDate(date) {
 										  if (todayAssignment) {
 										  // Assignment for today exists in IndexedDB
 										  document.getElementById('assignmentInput').value = todayAssignment.assignment; 
-										  //NOw check if this date has any stored assignments, clockedin clocked out, if yes - then display that
 										  document.getElementById('storedassignmentInput').value = todayAssignment.assignment;
 										  }
-										  getAssignmentsByDate(formattedToday).then((result) => {
-																					if (result){
-																				const mytable=	document.getElementById("mytable");
-												result.forEach(function(individualresult) {
-												console.log(individualresult);
-												// Process each record as needed
-															   const myrow=document.createElement("tr");
-															   for (const cell of [
-																				   individualresult.id,
-																				   individualresult.date,
-																				   individualresult.assignment,
-																				   individualresult.clockInTime,
-																				   individualresult.clockOutTime,
-																				   		
-																				   ]) {
-															   const tableCell = document.createElement("td");
-															   tableCell.textContent = cell;
-															   myrow.appendChild(tableCell);
-															   }
-															   const mytd = document.createElement("td");
-															   mytd.textContent="Edit";
-															   myrow.appendChild(mytd);
-															   mytable.appendChild(myrow);
-
-																					
-																					
-																					
-															   });
-																					
-																				
-																						
-																					} else {
-																					//No result
-																					
-																					}
-																					}).catch((error) => {
-																							console.error(error);
-																							});
 										  
+										  // Get assignments for today and update the table
+										  const result = await getAssignmentsByDate(formattedToday);
+										  const mytable = document.getElementById("mytable");
+										  mytable.textContent = ""; // Clear existing table contents
 										  
-										  
+										  if (result) {
+										  result.forEach(function (individualresult) {
+														 console.log(individualresult);
+														 
+														 // Create a new row
+														 const myrow = document.createElement("tr");
+														 
+														 // Append other details like id, date, assignment
+														 for (const cell of [
+																			 individualresult.id,
+																			 individualresult.date,
+																			 individualresult.assignment
+																			 ]) {
+														 const tableCell = document.createElement("td");
+														 tableCell.textContent = cell;
+														 myrow.appendChild(tableCell);
+														 }
+														 
+														 // Clock In Time Cell
+														 const clockInCell = document.createElement("td");
+														 clockInCell.id = "clockIn" + individualresult.id; // Add unique ID
+														 
+														 if (individualresult.clockInTime) {
+														 // If clockInTime exists, display it and add an Edit button
+														 clockInCell.textContent = individualresult.clockInTime + " ";
+														 const editButton = document.createElement("button");
+														 editButton.textContent = "Edit";
+														 editButton.onclick = () => editTimes(individualresult.id); // Pass the id to editTimes
+														 clockInCell.appendChild(editButton);
+														 } else {
+														 // If clockInTime is null, add a Clock In button
+														 const clockInButton = document.createElement("button");
+														 clockInButton.textContent = "Clock In";
+														 clockInButton.onclick = () => clockIn(individualresult.id); // Pass the id to clockIn
+														 clockInCell.appendChild(clockInButton);
+														 }
+														 myrow.appendChild(clockInCell);
+														 
+														 // Clock Out Time Cell
+														 const clockOutCell = document.createElement("td");
+														 clockOutCell.id = "clockOut" + individualresult.id; // Add unique ID
+														 
+														 if (individualresult.clockOutTime) {
+														 // If clockOutTime exists, display it and add an Edit button
+														 clockOutCell.textContent = individualresult.clockOutTime + " ";
+														 const editButton = document.createElement("button");
+														 editButton.textContent = "Edit";
+														 editButton.onclick = () => editTimes(individualresult.id); // Pass the id to editTimes
+														 clockOutCell.appendChild(editButton);
+														 } else {
+														 // If clockOutTime is null, add a Clock Out button
+														 const clockOutButton = document.createElement("button");
+														 clockOutButton.textContent = "Clock Out";
+														 clockOutButton.onclick = () => clockOut(individualresult.id); // Pass the id to clockOut
+														 clockOutCell.appendChild(clockOutButton);
+														 }
+														 myrow.appendChild(clockOutCell);
+														 
+														 // Delete Button Cell
+														 const deleteCell = document.createElement("td");
+														 const deleteButton = document.createElement("button");
+														 deleteButton.textContent = "Delete";
+														 deleteButton.onclick = () => deleteRecord(individualresult.id); // Pass the id to deleteRecord
+														 deleteCell.appendChild(deleteButton);
+														 myrow.appendChild(deleteCell);
+														 
+														 // Append the row to the table
+														 mytable.appendChild(myrow);
+														 });
+										  } else {
+										  console.log("No assignments found for today.");
+										  }
 										  } catch (error) {
 										  console.error('Error displaying today\'s assignment:', error);
 										  }
 										  }
+
 										  
 										  function getRecordsByDate(date, callback) {
 										  const store = getTransaction(clockstoreName, 'readonly');
