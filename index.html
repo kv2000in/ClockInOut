@@ -32,11 +32,13 @@ width: 100%;
 <input type="datetime-local" id="dateTimeInput">
 <input type="hidden" id="assignmentInput" placeholder="Enter your assignment">
 <input type="text" id="storedassignmentInput" placeholder="Enter your assignment">
-<table id = "mytable"></table>
+<table id="mytable"></table>
+<div id='clockInOut'>
 <input type="datetime-local" id="ClockInTimeInput">
-<button id="clockInButton" onclick="clockIn()">Clock In</button>
+<button id="clockInButton" onclick="clockIn('0')">Clock In</button>
 <input type="datetime-local" id="ClockOutTimeInput">
-<button id="clockOutButton" onclick="clockOut()">Clock Out</button>
+<button id="clockOutButton" onclick="clockOut('0')">Clock Out</button>
+</div>
 <h2>Get Records</h2>
 <input type="datetime-local" id="startDate">
 <input type="datetime-local" id="endDate">
@@ -44,6 +46,14 @@ width: 100%;
 <button onclick="getLastWeekRecords()">Last Week</button>
 <button onclick="getLastMonthRecords()">Last Month</button>
 <!-- <button onclick="clearIndexedDB()">Clear IndexedDB</button> -->
+</div>
+
+<!-- HTML for the modal -->
+<div id="dateTimeModal" style="display:none;">
+<label for="dateTimeInput">Enter date and time:</label>
+<input type="datetime-local" id="dateTimeInputModal" />
+<button onclick="saveDateTime()">Save</button>
+<button onclick="closeDateTimeModal()">Cancel</button>
 </div>
 <script>
 const dbName = 'ClockInOutDB';
@@ -360,30 +370,40 @@ function formatDate(date) {
 										   
 										   */
 										  
+										  let currentPrimaryKey;
+										  let currentWhichTime;
+										  
 										  async function editTimes(primaryKey, whichTime) {
-										  const now = new Date();
-										  const localDateTime = formatDateTime(now);
-										  // Create a temporary input element for date-time selection
-										  const dateTimeInput = document.createElement('input');
-										  dateTimeInput.type = 'datetime-local';
-										  document.body.appendChild(dateTimeInput);
+										  currentPrimaryKey = primaryKey;
+										  currentWhichTime = whichTime;
 										  
-										  const store = getTransaction(clockstoreName, 'readonly');
-										  const request = store.get(primaryKey);
+										  // Display the modal
+										  const modal = document.getElementById('dateTimeModal');
+										  modal.style.display = 'block';
 										  
-										  request.onsuccess = function(event) {
-										  const record = event.target.result;
-										  if (record) {
+										  const record = await getRecordById(primaryKey);
+										  const localDateTime = formatDateTime(new Date());
+										  
 										  // Set the default value of the date-time picker
+										  const dateTimeInput = document.getElementById('dateTimeInputModal');
 										  dateTimeInput.value = whichTime === 'clockIn' ? record.clockInTime || localDateTime : record.clockOutTime || localDateTime;
+										  }
 										  
-										  // Open the date-time picker
-										  dateTimeInput.focus();
+										  function saveDateTime() {
+										  const dateTimeInput = document.getElementById('dateTimeInputModal').value;
+										  if (dateTimeInput) {
+										  updateRecord(currentPrimaryKey, currentWhichTime, dateTimeInput);
+										  }
+										  closeDateTimeModal();
+										  }
 										  
-										  dateTimeInput.onchange = async function() {
-										  const selectedDateTime = dateTimeInput.value;
-										  const updateStore = getTransaction(clockstoreName, 'readwrite');
-										  const updateRequest = updateStore.get(primaryKey);
+										  function closeDateTimeModal() {
+										  document.getElementById('dateTimeModal').style.display = 'none';
+										  }
+										  
+										  async function updateRecord(primaryKey, whichTime, selectedDateTime) {
+										  const store = getTransaction(clockstoreName, 'readwrite');
+										  const updateRequest = store.get(primaryKey);
 										  
 										  updateRequest.onsuccess = function(event) {
 										  const record = event.target.result;
@@ -396,7 +416,7 @@ function formatDate(date) {
 										  }
 										  
 										  // Save the updated record back into the object store
-										  const putRequest = updateStore.put(record);
+										  const putRequest = store.put(record);
 										  putRequest.onsuccess = function() {
 										  // Update the displayed value in the corresponding cell
 										  const cellId = whichTime === 'clockIn' ? 'clockIn' + primaryKey : 'clockOut' + primaryKey;
@@ -418,23 +438,22 @@ function formatDate(date) {
 										  updateRequest.onerror = function(event) {
 										  console.error('Error retrieving record:', event.target.error);
 										  };
-										  
-										  // Remove the date-time input element
-										  document.body.removeChild(dateTimeInput);
-										  };
-										  
-										  dateTimeInput.onblur = function() {
-										  // Remove the date-time input element if the user clicks outside
-										  document.body.removeChild(dateTimeInput);
-										  };
-										  } else {
-										  console.error('Record not found');
 										  }
-										  };
 										  
-										  request.onerror = function(event) {
-										  console.error('Error retrieving record:', event.target.error);
-										  };
+										  // Helper function to retrieve a record by its primary key
+										  async function getRecordById(primaryKey) {
+										  return new Promise((resolve, reject) => {
+															 const store = getTransaction(clockstoreName, 'readonly');
+															 const request = store.get(primaryKey);
+															 
+															 request.onsuccess = function(event) {
+															 resolve(event.target.result);
+															 };
+															 
+															 request.onerror = function(event) {
+															 reject(event.target.error);
+															 };
+															 });
 										  }
 
 
@@ -572,8 +591,10 @@ function formatDate(date) {
 										  document.getElementById('ClockInTimeInput').value = localDateTime;
 										  document.getElementById('clockInButton').innerHTML = "Clock In";
 										  document.getElementById('clockOutButton').innerHTML = "Clock Out";
+										  document.getElementById('clockInButton').disabled = false;
+										  document.getElementById('clockOutButton').disabled = false;
 										  document.getElementById('storedassignmentInput').value = null;
-										  
+										  document.getElementById('clockInOut').style="display:block";
 										  // Get today's date input value
 										  const mydate = document.getElementById('dateTimeInput').value;
 										  const formattedToday = formatQDate(formatDateTime(mydate));
@@ -594,6 +615,7 @@ function formatDate(date) {
 										  mytable.textContent = ""; // Clear existing table contents
 										  
 										  if (result) {
+										  document.getElementById('clockInOut').style="display:none";
 										  result.forEach(function (individualresult) {
 														 console.log(individualresult);
 														 
