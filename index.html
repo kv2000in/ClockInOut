@@ -225,8 +225,8 @@ function initializeDateTimeInputs(callback) {
 	const now = new Date();
 	const localDateTime = formatDateTime(now);
 	document.getElementById('dateTimeInput').value = setCurrentLocalDate();
-	document.getElementById('startDate').value = localDateTime;
-	document.getElementById('endDate').value = localDateTime;
+	document.getElementById('startDate').value = setCurrentLocalDate();
+	document.getElementById('endDate').value = setCurrentLocalDate();
 	document.getElementById('ClockOutTimeInput').value = localDateTime;
 	document.getElementById('ClockInTimeInput').value = localDateTime;
 	
