@@ -306,6 +306,22 @@ function calculateTimeAtWork(clockInTime, clockOutTime) {
 										  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
 										  }
 										  
+function formatDateTo7AM(dateString) {
+	const date = new Date(dateString); // Input will only have date part (YYYY-MM-DD)
+	
+		// Set the time to 7 AM
+	date.setHours(7, 0, 0, 0); // Set hours to 7, minutes to 0, seconds to 0, milliseconds to 0
+	
+	const pad = (num, size) => num.toString().padStart(size, '0');
+	const year = date.getFullYear();
+	const month = pad(date.getMonth() + 1, 2);
+	const day = pad(date.getDate(), 2);
+	const hours = pad(date.getHours(), 2);
+	const minutes = pad(date.getMinutes(), 2);
+	const seconds = pad(date.getSeconds(), 2);
+	
+	return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+}
 										  
 										  function getLastWeekRecords() {
 										  const endDate = new Date();
@@ -499,7 +515,7 @@ function calculateTimeAtWork(clockInTime, clockOutTime) {
 										  const assignment = document.getElementById('storedassignmentInput').value;
 										  const formattedToday = document.getElementById('dateTimeInput').value;
 										  
-										  if (assignment && dateTime) {
+										  if (assignment && formattedToday) {
 										  const newStore = getTransaction(clockstoreName, 'readwrite');
 										  newStore.put({
 													   date: formattedToday,
@@ -523,8 +539,6 @@ function calculateTimeAtWork(clockInTime, clockOutTime) {
 
 										  
 										  async function clockOut(primaryKey) {
-										  const now = new Date();
-										  const localDateTime = formatDateTime(now);
 										  const store = getTransaction(clockstoreName, 'readwrite');
 										  const request = store.get(primaryKey);
 										  
@@ -532,7 +546,7 @@ function calculateTimeAtWork(clockInTime, clockOutTime) {
 										  const record = event.target.result;
 										  if (record) {
 										  // Update the record with clockOutTime
-										  record.clockOutTime = localDateTime; // Current time
+											  record.clockOutTime = document.getElementById('ClockOutTimeInput'+primaryKey).value;
 										  
 										  // Save the updated record back into the object store
 										  const updateRequest = store.put(record);
@@ -540,7 +554,7 @@ function calculateTimeAtWork(clockInTime, clockOutTime) {
 										  updateRequest.onsuccess = function(event) {
 										  // Update the UI after successful clock out
 										  const clockOutCell = document.getElementById('clockOut' + primaryKey);
-										  clockOutCell.textContent = localDateTime + " ";
+										  clockOutCell.textContent = document.getElementById('ClockOutTimeInput'+primaryKey).value + " ";
 										  
 										  // Add the Edit button next to the clockOut time
 										  const editButton = document.createElement("button");
@@ -558,17 +572,19 @@ function calculateTimeAtWork(clockInTime, clockOutTime) {
 										  const assignment = document.getElementById('storedassignmentInput').value;
 										  const formattedToday = document.getElementById('dateTimeInput').value;
 										  
-										  if (assignment && dateTime) {
+										  if (assignment && formattedToday) {
+											   
 										  const newStore = getTransaction(clockstoreName, 'readwrite');
-										  newStore.put({
-													   date: formattedToday,
-													   clockInTime: null,
-													   assignment: assignment,
-													   clockOutTime: localDateTime, // Use localDateTime here for consistency
-													   });
-										  
-										 displayTodaysAssignment();
-										  } else {
+											  newStore.put({
+														   date: formattedToday,
+														   clockInTime: formatDateTo7AM(formattedToday),//Set default clock In time to 7 am. User is able to edit it as needed.
+														   assignment: assignment,
+														   clockOutTime: document.getElementById('ClockOutTimeInput').value, // Use localDateTime here for consistency
+														   });
+											  
+											  displayTodaysAssignment();
+											  
+											 } else {
 										  alert('Please enter your assignment and select a date/time.');
 										  }
 										  }
@@ -665,6 +681,9 @@ function calculateTimeAtWork(clockInTime, clockOutTime) {
 														 clockOutCell.appendChild(editButton);
 														 } else {
 														 // If clockOutTime is null, add a Clock Out button
+														 const ClockOutTimeInputfromTable = document.createElement("input");
+														 ClockOutTimeInputfromTable.type="datetime-local";
+														 ClockOutTimeInputfromTable.id="ClockOutTimeInput"+ individualresult.id;
 														 const clockOutButton = document.createElement("button");
 														 clockOutButton.textContent = "Clock Out";
 														 clockOutButton.onclick = () => clockOut(individualresult.id); // Pass the id to clockOut
@@ -675,7 +694,7 @@ function calculateTimeAtWork(clockInTime, clockOutTime) {
 														 // Delete Button Cell
 														 const deleteCell = document.createElement("td");
 														 const deleteButton = document.createElement("button");
-														 deleteButton.textContent = "Delete";
+														 deleteButton.textContent = "X";
 														 deleteButton.onclick = () => deleteRecord(individualresult.id); // Pass the id to deleteRecord
 														 deleteCell.appendChild(deleteButton);
 														 myrow.appendChild(deleteCell);
