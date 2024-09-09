@@ -360,133 +360,201 @@ function formatDate(date) {
 										   
 										   */
 										  
-										  async function editTimes() {
-										  const assignment = document.getElementById('storedassignmentInput').value;
-										  const dateTime = document.getElementById('dateTimeInput').value;
+										  async function editTimes(primaryKey, whichTime) {
+										  const now = new Date();
+										  const localDateTime = formatDateTime(now);
+										  // Create a temporary input element for date-time selection
+										  const dateTimeInput = document.createElement('input');
+										  dateTimeInput.type = 'datetime-local';
+										  document.body.appendChild(dateTimeInput);
 										  
-										  const formattedToday = formatQDate(formatDateTime(dateTime)); //Date of interest
+										  // Set the value to the current time if there is already a value
+										  const store = getTransaction(clockstoreName, 'readonly');
+										  const request = store.get(primaryKey);
 										  
-										  if (assignment && dateTime) {
-										  //Check if a record exists for this date and assignment
-										  
-										  const store = getTransaction(clockstoreName, 'readwrite');
-										  const index = store.index('date_index');
-										  // Assumes you have an index on date and assignment
-										  
-										  const query = IDBKeyRange.only([formattedToday]);
-										  const request = index.get(query);
-										  
-										  
-										request.onsuccess = function(event) {
+										  request.onsuccess = function(event) {
 										  const record = event.target.result;
-										  
 										  if (record) {
-										  // Modify the record as needed
+										  // Set the default value of the date-time picker to the current time
+										  if (whichTime === 'clockIn') {
+										  dateTimeInput.value = record.clockInTime || localDateTime;
+										  } else if (whichTime === 'clockOut') {
+										  dateTimeInput.value = record.clockOutTime || localDateTime;
+										  }
 										  
-										  record.clockInTime = document.getElementById('ClockInTimeInput').value; // vs current time
+										  // Open the date-time picker
+										  dateTimeInput.focus();
+										  
+										  dateTimeInput.onchange = async function() {
+										  const selectedDateTime = dateTimeInput.value;
+										  const store = getTransaction(clockstoreName, 'readwrite');
+										  const updateRequest = store.get(primaryKey);
+										  
+										  updateRequest.onsuccess = function(event) {
+										  const record = event.target.result;
+										  if (record) {
+										  // Update the record based on whichTime
+										  if (whichTime === 'clockIn') {
+										  record.clockInTime = selectedDateTime;
+										  } else if (whichTime === 'clockOut') {
+										  record.clockOutTime = selectedDateTime;
+										  }
+										  
+										  // Save the updated record back into the object store
+										  const updateRequest = store.put(record);
+										  updateRequest.onsuccess = function() {
+										  // Update the displayed value in the corresponding cell
+										  const cellId = whichTime === 'clockIn' ? 'clockIn' + primaryKey : 'clockOut' + primaryKey;
+										  const cell = document.getElementById(cellId);
+										  if (cell) {
+										  cell.textContent = selectedDateTime + " ";
+										  const editButton = document.createElement("button");
+										  editButton.textContent = "Edit";
+										  editButton.onclick = () => editTimes(primaryKey, whichTime); // Refresh the edit button
+										  cell.appendChild(editButton);
+										  }
+										  };
+										  updateRequest.onerror = function(event) {
+										  console.error('Error updating record:', event.target.error);
+										  };
+										  }
+										  };
+										  updateRequest.onerror = function(event) {
+										  console.error('Error retrieving record:', event.target.error);
+										  };
+										  
+										  // Remove the date-time input element
+										  document.body.removeChild(dateTimeInput);
+										  };
+										  
+										  dateTimeInput.onblur = function() {
+										  // Remove the date-time input element if the user clicks outside
+										  document.body.removeChild(dateTimeInput);
+										  };
+										  }
+										  };
+										  request.onerror = function(event) {
+										  console.error('Error retrieving record:', event.target.error);
+										  };
+										  }
+
+										  async function clockIn(primaryKey) {
+										  const now = new Date();
+										  const localDateTime = formatDateTime(now);
+										  const store = getTransaction(clockstoreName, 'readwrite');
+										  const request = store.get(primaryKey);
+										  
+										  request.onsuccess = function(event) {
+										  const record = event.target.result;
+										  if (record) {
+										  // Update the record with clockInTime
+										  record.clockInTime = localDateTime; // Current time
 										  
 										  // Save the updated record back into the object store
 										  const updateRequest = store.put(record);
 										  
 										  updateRequest.onsuccess = function(event) {
-										  //console.log('Record updated successfully!');
+										  // Update the UI after successful clock in
+										  const clockInCell = document.getElementById('clockIn' + primaryKey);
+										  clockInCell.textContent = localDateTime + " ";
+										  
+										  // Add the Edit button next to the clockIn time
+										  const editButton = document.createElement("button");
+										  editButton.textContent = "Edit";
+										  editButton.onclick = () => editTimes(primaryKey, "clockIn"); // Pass the id to editTimes
+										  clockInCell.appendChild(editButton);
 										  };
 										  
 										  updateRequest.onerror = function(event) {
-										  //console.error('Error updating record:', event.target.errorCode);
+										  console.error('Error updating record:', event.target.errorCode);
 										  };
 										  } else {
-										  //console.log('Record not found');
-										  
-										  store.put({date:formattedToday,
-										  // clockInTime: new Date(dateTime).toLocaleString(),
-										  clockInTime: document.getElementById('ClockInTimeInput').value,
-										  assignment: assignment,
-										  clockOutTime: null,});
-										  
-										   
-										  
-										  
+										  console.log('Record not found');
 										  }
-										  }
-										  }
-										  }
-										  async function clockIn() {
+										  };
+										  
+										  request.onerror = function(event) {
+										  console.log('Failed to retrieve assignment');
 										  const assignment = document.getElementById('storedassignmentInput').value;
 										  const dateTime = document.getElementById('dateTimeInput').value;
 										  
-										  const formattedToday = formatQDate(formatDateTime(dateTime)); //Date of interest
+										  const formattedToday = formatQDate(formatDateTime(dateTime)); // Date of interest
 										  
 										  if (assignment && dateTime) {
-										  //Check if a record exists for this date and assignment
-										  
 										  const store = getTransaction(clockstoreName, 'readwrite');
-										store.put({date:formattedToday,
-													// clockInTime: new Date(dateTime).toLocaleString(),
-													clockInTime: document.getElementById('ClockInTimeInput').value,
+										  store.put({
+													date: formattedToday,
+													clockInTime: document.getElementById('ClockInTimeInput').value, // Add clockInTime
 													assignment: assignment,
-												  clockOutTime: null,});
+													clockOutTime: null, // Leave clockOutTime as null
+													});
 										  document.getElementById('clockInButton').innerHTML = "Clocked In";
-										
+										  document.getElementById('clockInButton').disabled = true;
 										  } else {
 										  alert('Please enter your assignment and select a date/time.');
 										  }
+										  };
 										  }
+
 										  
 										  async function clockOut(primaryKey) {
 										  const now = new Date();
 										  const localDateTime = formatDateTime(now);
 										  const store = getTransaction(clockstoreName, 'readwrite');
 										  const request = store.get(primaryKey);
+										  
 										  request.onsuccess = function(event) {
 										  const record = event.target.result;
 										  if (record) {
-										  // Modify the record as needed
-										  
-										  record.clockOutTime = localDateTime; // current time
+										  // Update the record with clockOutTime
+										  record.clockOutTime = localDateTime; // Current time
 										  
 										  // Save the updated record back into the object store
 										  const updateRequest = store.put(record);
 										  
 										  updateRequest.onsuccess = function(event) {
-										  //console.log('Record updated successfully!');
+										  // Update the UI after successful clock out
+										  const clockOutCell = document.getElementById('clockOut' + primaryKey);
+										  clockOutCell.textContent = localDateTime + " ";
+										  
+										  // Add the Edit button next to the clockOut time
+										  const editButton = document.createElement("button");
+										  editButton.textContent = "Edit";
+										  editButton.onclick = () => editTimes(primaryKey, "clockOut"); // Pass the id to editTimes
+										  clockOutCell.appendChild(editButton);
 										  };
 										  
 										  updateRequest.onerror = function(event) {
-										  //console.error('Error updating record:', event.target.errorCode);
+										  console.error('Error updating record:', event.target.errorCode);
 										  };
 										  } else {
-										  //console.log('Record not found');
-										  
-		
-										  
-										  
-										  
+										  console.log('Record not found');
 										  }
-										  }
-										  ;
+										  };
+										  
 										  request.onerror = function(event) {
 										  console.log('Failed to retrieve assignment');
-										  //No record exists for this date and assignment
+										  const assignment = document.getElementById('storedassignmentInput').value;
+										  const dateTime = document.getElementById('dateTimeInput').value;
+										  
+										  const formattedToday = formatQDate(formatDateTime(dateTime)); // Date of interest
+										  
+										  if (assignment && dateTime) {
+										  const store = getTransaction(clockstoreName, 'readwrite');
 										  store.put({
-													date:formattedToday,
-													// clockInTime: new Date(dateTime).toLocaleString(),
+													date: formattedToday,
 													clockInTime: null,
 													assignment: assignment,
 													clockOutTime: document.getElementById('ClockOutTimeInput').value,
 													});
-										  
-										  };
-										  
-										  
 										  document.getElementById('clockOutButton').innerHTML = "Clocked Out";
-										
+										  document.getElementById('clockOutButton').disabled = true;
 										  } else {
 										  alert('Please enter your assignment and select a date/time.');
 										  }
-										  
-										  
+										  };
 										  }
+
 										  
 										  async function displayTodaysAssignment() {
 										  // Clear and reset the clock in/clock out times and buttons
@@ -525,7 +593,7 @@ function formatDate(date) {
 														 
 														 // Create a new row
 														 const myrow = document.createElement("tr");
-														 
+														 myrow.id = `row${individualresult.id}`;
 														 // Append other details like id, date, assignment
 														 for (const cell of [
 																			 individualresult.id,
@@ -546,7 +614,7 @@ function formatDate(date) {
 														 clockInCell.textContent = individualresult.clockInTime + " ";
 														 const editButton = document.createElement("button");
 														 editButton.textContent = "Edit";
-														 editButton.onclick = () => editTimes(individualresult.id); // Pass the id to editTimes
+														 editButton.onclick = () => editTimes(individualresult.id, "clockIn"); // Pass the id to editTimes
 														 clockInCell.appendChild(editButton);
 														 } else {
 														 // If clockInTime is null, add a Clock In button
@@ -566,7 +634,7 @@ function formatDate(date) {
 														 clockOutCell.textContent = individualresult.clockOutTime + " ";
 														 const editButton = document.createElement("button");
 														 editButton.textContent = "Edit";
-														 editButton.onclick = () => editTimes(individualresult.id); // Pass the id to editTimes
+														 editButton.onclick = () => editTimes(individualresult.id,"clockOut"); // Pass the id to editTimes
 														 clockOutCell.appendChild(editButton);
 														 } else {
 														 // If clockOutTime is null, add a Clock Out button
@@ -596,6 +664,26 @@ function formatDate(date) {
 										  }
 										  }
 
+										  async function deleteRecord(primaryKey) {
+										  const store = getTransaction(clockstoreName, 'readwrite'); // Open a readwrite transaction
+										  const request = store.delete(primaryKey); // Delete the record with the given primary key
+										  
+										  request.onsuccess = function(event) {
+										  console.log(`Record with primaryKey ${primaryKey} deleted successfully!`);
+										  
+										  // Remove the corresponding row from the UI
+										  const rowToDelete = document.getElementById(`row${primaryKey}`);
+										  if (rowToDelete) {
+										  rowToDelete.remove(); // Remove the row from the table
+										  }
+										  };
+										  
+										  request.onerror = function(event) {
+										  console.error('Error deleting record:', event.target.errorCode);
+										  };
+										  }
+
+										  
 										  
 										  function getRecordsByDate(date, callback) {
 										  const store = getTransaction(clockstoreName, 'readonly');
