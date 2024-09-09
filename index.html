@@ -659,30 +659,38 @@ function calculateHoursWorked(clockInTime, clockOutTime) {
 
 	// Function to calculate overtime based on assignment and clockOutTime
 function calculateOvertime(clockOutTime, assignment, date, clockInTime) {
-	const formattedToday = new Date(date);
-	const endOfDay = new Date(formattedToday);
-	endOfDay.setHours(17, 0, 0, 0); // 5 PM
-	
+		// Format the date with specific times
+	const endOfDay = formatDateTo5PM(date); // 5 PM of the same day
 	let overtime = 0;
 	
 	if (assignment.includes("CC")) {
-		const nextDay = new Date(formattedToday);
-		nextDay.setDate(nextDay.getDate() + 1);
-		nextDay.setHours(1, 0, 0, 0); // 1 AM of next day
-		if (clockOutTime > nextDay) {
-			overtime = Math.max((clockOutTime - nextDay) / (1000 * 60 * 60), 0); // Hours in overtime
+			// Calculate next day at 1 AM for overtime (1 AM of the following day)
+		const nextDay1AM = `${new Date(new Date(date).setDate(new Date(date).getDate() + 1)).toISOString().split('T')[0]}T01:00:00`;
+		
+		if (clockOutTime > nextDay1AM) {
+				// Overtime if clockOut is after 1 AM the next day
+			overtime = Math.max((new Date(clockOutTime) - new Date(nextDay1AM)) / (1000 * 60 * 60), 0); // Hours in overtime
 		}
-		if (clockInTime < new Date(formattedToday.setHours(14, 0, 0, 0))) {
-			overtime += Math.max((14 - 7), 0); // If clock-in before 2 PM, add hours before 7 AM
+		
+			// Check if clockIn was before 2 PM on the same day (if so, apply overtime calculation for early clockIn)
+		const cutoffTime2PM = `${date}T14:00:00`; // 2 PM of the same day
+		if (clockInTime < cutoffTime2PM) {
+				// If clockIn is before 2 PM, calculate overtime for hours before 2 PM
+			const earlyHours = Math.max((new Date(cutoffTime2PM) - new Date(clockInTime)) / (1000 * 60 * 60), 0);
+			overtime += earlyHours;
 		}
 	} else {
+			// Standard overtime calculation for non-CC assignments
 		if (clockOutTime > endOfDay) {
-			overtime = Math.max((clockOutTime - endOfDay) / (1000 * 60 * 60), 0); // Hours in overtime
+				// Overtime if clockOut is after 5 PM on the same day
+			overtime = Math.max((new Date(clockOutTime) - new Date(endOfDay)) / (1000 * 60 * 60), 0); // Hours in overtime
 		}
 	}
 	
-	return Math.ceil(overtime * 4) / 4; // Round to nearest 15 minutes
+		// Round overtime to the nearest 15 minutes
+	return Math.ceil(overtime * 4) / 4;
 }
+
 
 	// Function to calculate session pay based on overtime and assignment
 function calculateSessionPay(overtime, assignment) {
