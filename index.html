@@ -508,12 +508,12 @@ function formatDateTo5PM(dateString) {
 										  // Handle case where the record does not exist
 										  const assignment = document.getElementById('storedassignmentInput').value;
 										  const formattedToday = document.getElementById('dateTimeInput').value;
-										  
+										  const clockInTime = document.getElementById('ClockInTimeInput').value;
 										  if (formattedToday) {
 										  const newStore = getTransaction(clockstoreName, 'readwrite');
 										  newStore.put({
 													   date: formattedToday,
-													   clockInTime: localDateTime, // Use localDateTime here for consistency
+													   clockInTime: clockInTime, // Use localDateTime here for consistency
 													   assignment: assignment,
 													   clockOutTime: null, // Leave clockOutTime as null
 													   });
@@ -657,39 +657,62 @@ function calculateHoursWorked(clockInTime, clockOutTime) {
 	return hoursWorked;
 }
 
-	// Function to calculate overtime based on assignment and clockOutTime
 function calculateOvertime(clockOutTime, assignment, date, clockInTime) {
-		// Format the date with specific times
-	const endOfDay = formatDateTo5PM(date); // 5 PM of the same day
+		// Extract day of the week without using new Date()
+	const dayOfWeek = new Date(`${date}T00:00:00`).getDay(); // Avoids GMT/UTC issue by using midnight time
+	
 	let overtime = 0;
 	
-	if (assignment.includes("CC")) {
-			// Calculate next day at 1 AM for overtime (1 AM of the following day)
-		const nextDay1AM = `${new Date(new Date(date).setDate(new Date(date).getDate() + 1)).toISOString().split('T')[0]}T01:00:00`;
-		
-		if (clockOutTime > nextDay1AM) {
-				// Overtime if clockOut is after 1 AM the next day
-			overtime = Math.max((new Date(clockOutTime) - new Date(nextDay1AM)) / (1000 * 60 * 60), 0); // Hours in overtime
-		}
-		
-			// Check if clockIn was before 2 PM on the same day (if so, apply overtime calculation for early clockIn)
-		const cutoffTime2PM = `${date}T14:00:00`; // 2 PM of the same day
-		if (clockInTime < cutoffTime2PM) {
-				// If clockIn is before 2 PM, calculate overtime for hours before 2 PM
-			const earlyHours = Math.max((new Date(cutoffTime2PM) - new Date(clockInTime)) / (1000 * 60 * 60), 0);
-			overtime += earlyHours;
-		}
+		// If the day is Saturday (6) or Sunday (0), calculate total time as overtime
+	if (dayOfWeek === 0 || dayOfWeek === 6) {
+		overtime = (new Date(clockOutTime) - new Date(clockInTime)) / (1000 * 60 * 60); // Calculate total hours
 	} else {
-			// Standard overtime calculation for non-CC assignments
-		if (clockOutTime > endOfDay) {
-				// Overtime if clockOut is after 5 PM on the same day
-			overtime = Math.max((new Date(clockOutTime) - new Date(endOfDay)) / (1000 * 60 * 60), 0); // Hours in overtime
+		const endOfDay = formatDateTo5PM(date); // 5 PM of the same day
+		
+		if (assignment.includes("CC")) {
+				// Calculate next day at 1 AM without new Date()
+			const nextDay1AM = `${increaseDateByOneDay(date)}T01:00:00`;
+			
+				// Overtime if clockOut is after 1 AM the next day
+			if (clockOutTime > nextDay1AM) {
+				overtime = (new Date(clockOutTime) - new Date(nextDay1AM)) / (1000 * 60 * 60); // Hours in overtime
+			}
+			
+				// Overtime if clockIn is before 2 PM
+			const cutoffTime2PM = `${date}T14:00:00`;
+			if (clockInTime < cutoffTime2PM) {
+				overtime += (new Date(cutoffTime2PM) - new Date(clockInTime)) / (1000 * 60 * 60); // Add early overtime hours
+			}
+		} else {
+				// Standard overtime calculation for non-CC assignments
+			if (clockOutTime > endOfDay) {
+				overtime = (new Date(clockOutTime) - new Date(endOfDay)) / (1000 * 60 * 60); // Hours in overtime
+			}
 		}
 	}
 	
 		// Round overtime to the nearest 15 minutes
 	return Math.ceil(overtime * 4) / 4;
 }
+
+	// Helper function to increase date by one day
+function increaseDateByOneDay(dateString) {
+	const dateParts = dateString.split('-');
+	const year = parseInt(dateParts[0], 10);
+	const month = parseInt(dateParts[1], 10) - 1; // Month is zero-based in JavaScript
+	const day = parseInt(dateParts[2], 10);
+	
+	const date = new Date(year, month, day);
+	date.setDate(date.getDate() + 1);
+	
+		// Format back to 'YYYY-MM-DD'
+	const newYear = date.getFullYear();
+	const newMonth = (date.getMonth() + 1).toString().padStart(2, '0');
+	const newDay = date.getDate().toString().padStart(2, '0');
+	
+	return `${newYear}-${newMonth}-${newDay}`;
+}
+
 
 
 	// Function to calculate session pay based on overtime and assignment
