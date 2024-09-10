@@ -220,6 +220,35 @@ function setCurrentLocalDate() {
 }
 
 
+	// Function to format the date to "yyyy-MM-dd" without using .toISOString()
+function formatDateToYYYYMMDD(date) {
+	const year = date.getFullYear();
+	const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+	const day = String(date.getDate()).padStart(2, '0');
+	return `${year}-${month}-${day}`;
+}
+
+function formatDateTime(inputDateTime) {
+	const date = new Date(inputDateTime);
+	const pad = (num, size) => num.toString().padStart(size, '0');
+	const year = date.getFullYear();
+	const month = pad(date.getMonth() + 1, 2);
+	const day = pad(date.getDate(), 2);
+	const hours = pad(date.getHours(), 2);
+	const minutes = pad(date.getMinutes(), 2);
+	const seconds = pad(date.getSeconds(), 2);
+	return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+}
+
+function formatDateTo7AM(dateString) {
+		// Directly append the time to the provided date string, assuming it's in the format 'YYYY-MM-DD'
+	return `${dateString}T07:00:00`;
+}
+
+function formatDateTo5PM(dateString) {
+		// Directly append the time to the provided date string, assuming it's in the format 'YYYY-MM-DD'
+	return `${dateString}T17:00:00`;
+}
 
 function initializeDateTimeInputs(callback) {
 	const now = new Date();
@@ -244,7 +273,8 @@ async function getRecords() {
 	request.onsuccess = function(event) {
 		const records = event.target.result;
 		const filteredRecords = records.filter(record=>{
-											   return record.clockInTime && record.clockOutTime && new Date(record.clockInTime) >= new Date(startDate) && new Date(record.clockOutTime) <= new Date(endDate);
+											   return new Date(record.date) >= new Date(startDate) && new Date(record.date) <= new Date(endDate);
+
 											   }
 											   );
 		
@@ -260,11 +290,11 @@ async function getRecords() {
 }
 
 function generateCSV(records) {
-	const csvHeaders = ['Assignment', 'Clock-in Time', 'Clock-out Time', 'Time at Work'];
+	const csvHeaders = ['Date', 'Assignment', 'Clock-in Time', 'Clock-out Time', 'Hours Worked', 'Overtime','Session Pay'];
 	const csvRows = [csvHeaders.join(',')];
 	
 	records.forEach(record=>{
-					const row = [`"${record.assignment}"`, `"${record.clockInTime}"`, `"${record.clockOutTime}"`, `"${calculateTimeAtWork(new Date(record.clockInTime), new Date(record.clockOutTime))}"`];
+					const row = [`"${record.date}"`,`"${record.assignment}"`, `"${record.clockInTime}"`, `"${record.clockOutTime}"`, `"${record.hoursWorked}"`,`"${record.overtime}"`,`"${record.sessionPay}"`];
 					csvRows.push(row.join(','));
 					}
 					);
@@ -284,44 +314,18 @@ function downloadCSV(csvContent, filename) {
 	URL.revokeObjectURL(url);
 }
 
-function calculateTimeAtWork(clockInTime, clockOutTime) {
-	const diff = (clockOutTime - clockInTime) / 1000;
-		// difference in seconds
-	const hours = Math.floor(diff / 3600);
-	const minutes = Math.floor((diff % 3600) / 60);
-	return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-}
 
 
+
+  
 										  
-										  function formatDateTime(inputDateTime) {
-										  const date = new Date(inputDateTime);
-										  const pad = (num, size) => num.toString().padStart(size, '0');
-										  const year = date.getFullYear();
-										  const month = pad(date.getMonth() + 1, 2);
-										  const day = pad(date.getDate(), 2);
-										  const hours = pad(date.getHours(), 2);
-										  const minutes = pad(date.getMinutes(), 2);
-										  const seconds = pad(date.getSeconds(), 2);
-										  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-										  }
-										  
-function formatDateTo7AM(dateString) {
-		// Directly append the time to the provided date string, assuming it's in the format 'YYYY-MM-DD'
-	return `${dateString}T07:00:00`;
-}
-
-function formatDateTo5PM(dateString) {
-		// Directly append the time to the provided date string, assuming it's in the format 'YYYY-MM-DD'
-	return `${dateString}T17:00:00`;
-}
 										  
 										  function getLastWeekRecords() {
 										  const endDate = new Date();
 										  const startDate = new Date();
 										  startDate.setDate(endDate.getDate() - 7);
-										  document.getElementById('startDate').value = formatDateTime(startDate);
-										  document.getElementById('endDate').value = formatDateTime(endDate);
+											  document.getElementById('startDate').value = formatDateToYYYYMMDD(startDate);
+											  document.getElementById('endDate').value = formatDateToYYYYMMDD(endDate);
 										  getRecords();
 										  }
 										  
@@ -329,8 +333,8 @@ function formatDateTo5PM(dateString) {
 										  const endDate = new Date();
 										  const startDate = new Date();
 										  startDate.setMonth(endDate.getMonth() - 1);
-										  document.getElementById('startDate').value = formatDateTime(startDate);
-										  document.getElementById('endDate').value = formatDateTime(endDate);
+											  document.getElementById('startDate').value = formatDateToYYYYMMDD(startDate);
+											  document.getElementById('endDate').value = formatDateToYYYYMMDD(endDate);
 										  getRecords();
 										  }
 										  
