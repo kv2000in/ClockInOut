@@ -658,42 +658,59 @@ function calculateHoursWorked(clockInTime, clockOutTime) {
 }
 
 function calculateOvertime(clockOutTime, assignment, date, clockInTime) {
-		// Extract day of the week without using new Date()
+		// Extract day of the week
 	const dayOfWeek = new Date(`${date}T00:00:00`).getDay(); // Avoids GMT/UTC issue by using midnight time
 	
 	let overtime = 0;
 	
+	console.log(`Day of week: ${dayOfWeek}`); // Debugging: Check day of week
+	console.log(`Assignment: ${assignment}`); // Debugging: Check assignment
+	
 		// If the day is Saturday (6) or Sunday (0), calculate total time as overtime
 	if (dayOfWeek === 0 || dayOfWeek === 6) {
 		overtime = (new Date(clockOutTime) - new Date(clockInTime)) / (1000 * 60 * 60); // Calculate total hours
+		console.log(`Weekend Overtime: ${overtime}`); // Debugging: Log overtime on weekends
 	} else {
 		const endOfDay = formatDateTo5PM(date); // 5 PM of the same day
+		console.log(`End of Day: ${endOfDay}`); // Debugging: Check end of day time
 		
 		if (assignment.includes("CC")) {
-				// Calculate next day at 1 AM without new Date()
+			console.log(`CC Assignment detected`); // Debugging: Check if CC is detected
+			
+				// Calculate next day at 1 AM without using new Date()
 			const nextDay1AM = `${increaseDateByOneDay(date)}T01:00:00`;
+			console.log(`Next Day 1 AM: ${nextDay1AM}`); // Debugging: Check next day 1 AM
 			
 				// Overtime if clockOut is after 1 AM the next day
 			if (clockOutTime > nextDay1AM) {
 				overtime = (new Date(clockOutTime) - new Date(nextDay1AM)) / (1000 * 60 * 60); // Hours in overtime
+				console.log(`Overtime after 1 AM: ${overtime}`); // Debugging: Log overtime after 1 AM
 			}
 			
 				// Overtime if clockIn is before 2 PM
 			const cutoffTime2PM = `${date}T14:00:00`;
 			if (clockInTime < cutoffTime2PM) {
-				overtime += (new Date(cutoffTime2PM) - new Date(clockInTime)) / (1000 * 60 * 60); // Add early overtime hours
+				const earlyOvertime = (new Date(cutoffTime2PM) - new Date(clockInTime)) / (1000 * 60 * 60);
+				overtime += earlyOvertime; // Add early overtime hours
+				console.log(`Overtime before 2 PM: ${earlyOvertime}`); // Debugging: Log early overtime
 			}
 		} else {
 				// Standard overtime calculation for non-CC assignments
+			console.log(`Non-CC Assignment detected`); // Debugging: Log non-CC assignments
 			if (clockOutTime > endOfDay) {
 				overtime = (new Date(clockOutTime) - new Date(endOfDay)) / (1000 * 60 * 60); // Hours in overtime
+				console.log(`Overtime after 5 PM: ${overtime}`); // Debugging: Log overtime after 5 PM
 			}
 		}
 	}
 	
 		// Round overtime to the nearest 15 minutes
-	return Math.ceil(overtime * 4) / 4;
+	const roundedOvertime = Math.ceil(overtime * 4) / 4;
+	console.log(`Final Rounded Overtime: ${roundedOvertime}`); // Debugging: Log final overtime
+	
+	return roundedOvertime;
 }
+
 
 	// Helper function to increase date by one day
 function increaseDateByOneDay(dateString) {
