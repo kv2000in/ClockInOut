@@ -623,14 +623,14 @@ async function clockOut(primaryKey) {
 					return;
 				}
 				
-				const overtime = calculateOvertime(clockOut, assignment, formattedToday, clockInTime);
+				const overtime = calculateOvertime(clockOutTime, assignment, formattedToday, clockInTime);
 				
 				newStore.put({
 							 date: formattedToday,
 							 clockInTime: clockInTime, // Default clock in time 7 AM
 							 assignment: assignment,
 							 clockOutTime: clockOutTime,
-							 hoursWorked: calculateHoursWorked(clockInTime, clockOut),
+							 hoursWorked: calculateHoursWorked(clockInTime, clockOutTime),
 							 overtime: overtime,
 							 sessionPay: calculateSessionPay(overtime, assignment),
 							 });
