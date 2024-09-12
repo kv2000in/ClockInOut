@@ -142,24 +142,43 @@ color: #333;
 <body>
 <div class="container">
 <h1>Clock In/Out</h1>
+
+<!-- Label and Input for Qgenda URL -->
+<label for="qgendaurl">Qgenda Calendar URL:</label>
 <input type="text" id="qgendaurl" placeholder="Enter Qgenda Calendar URL">
+
+<!-- Label and Input for Date -->
+<label for="dateTimeInput">Select Date:</label>
 <input type="date" id="dateTimeInput">
-<input type="hidden" id="assignmentInput" placeholder="Enter your assignment">
+
+<!-- Label and Input for Assignment (Hidden Input) -->
+<input type="hidden" id="assignmentInput">
+
+<!-- Label and Input for Stored Assignment -->
+<label for="storedassignmentInput">Assignment:</label>
 <input type="text" id="storedassignmentInput" placeholder="Enter your assignment">
-<table id="mytable"></table>
+
+<!-- Clock In/Out Section -->
 <div id="clockInOut">
+<label for="ClockInTimeInput">Clock In Time:</label>
 <input type="datetime-local" id="ClockInTimeInput">
 <button id="clockInButton" onclick="clockIn('0')">Clock In</button>
+
+<label for="ClockOutTimeInput">Clock Out Time:</label>
 <input type="datetime-local" id="ClockOutTimeInput">
 <button id="clockOutButton" onclick="clockOut('0')">Clock Out</button>
 </div>
+
+<!-- Section for Getting Records -->
 <h2>Get Records</h2>
+<label for="startDate">Start Date:</label>
 <input type="date" id="startDate">
+
+<label for="endDate">End Date:</label>
 <input type="date" id="endDate">
 <button onclick="getRecords()">Get Records</button>
 <button onclick="getLastWeekRecords()">Last Week</button>
 <button onclick="getLastMonthRecords()">Last Month</button>
-<!-- <button onclick="clearIndexedDB()">Clear IndexedDB</button> -->
 </div>
 
 <!-- Modal -->
@@ -926,7 +945,20 @@ async function handleUpdatedAssignment(primaryKey){
 										  if (result && result.length > 0) {
 										  // If there are results, hide the clockInOut section
 										  //document.getElementById('clockInOut').style.display = "none";
-										  
+												  // Create a table header row element
+											  const columnHeaderRow = document.createElement("tr");
+											  
+												  // List of column header names
+											  const headers = ["Date", "Assignment", "Clock-In", "Clock-Out", "Action"];
+											  
+												  // Loop through the headers and create a 'th' element for each one
+											  headers.forEach(headerText => {
+															  const th = document.createElement("th");  // Create the 'th' element
+															  th.textContent = headerText;              // Set the text inside the 'th'
+															  columnHeaderRow.appendChild(th);          // Append the 'th' to the header row
+															  });
+											  mytable.appendChild(columnHeaderRow);
+											  
 										  result.forEach(function (individualresult) {
 														 //console.log(individualresult);
 														 
