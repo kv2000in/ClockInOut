@@ -7,7 +7,7 @@
 <link rel="manifest" href="./manifest.json">
 <link rel="icon" href="./icons/favicon.ico" type="image/x-icon">
 <style>
-/* General Styling */
+	//* General Styling */
 * {
 	box-sizing: border-box;
 margin: 0;
@@ -19,7 +19,7 @@ body {
 	background-color: #f4f4f4;
 margin: 0;
 padding: 20px;
-	-webkit-font-smoothing: antialiased; /* Optimize text rendering on WebKit */
+	-webkit-font-smoothing: antialiased;
 color: #333;
 }
 
@@ -67,6 +67,33 @@ button:hover {
 	background-color: #2980b9;
 }
 
+/* Table Styling */
+#mytable {
+width: 100%;
+	margin-top: 20px;
+	border-collapse: collapse;
+	table-layout: fixed; /* Prevent horizontal overflow */
+	overflow-x: auto; /* Allow scrolling if necessary */
+}
+
+#mytable th, #mytable td {
+padding: 8px;
+	text-align: left;
+	border-bottom: 1px solid #ddd;
+	word-wrap: break-word; /* Force wrapping in long content */
+	font-size: 14px; /* Adjust the font size for better fit */
+	white-space: normal; /* Allow text to wrap */
+}
+
+#mytable th {
+	background-color: #f4f4f4;
+color: #333;
+}
+
+#mytable tr:hover {
+	background-color: #f9f9f9;
+}
+
 /* Mobile Styles */
 @media only screen and (max-width: 600px) {
 	body {
@@ -85,6 +112,10 @@ button:hover {
 	
 	h1, h2 {
 		font-size: 20px;
+	}
+	
+	#mytable th, #mytable td {
+		font-size: 12px; /* Reduce the font size on smaller screens */
 	}
 }
 
@@ -116,27 +147,6 @@ width: 100%;
 	margin-top: 10px;
 }
 
-/* Table Styling */
-#mytable {
-width: 100%;
-	margin-top: 20px;
-	border-collapse: collapse;
-}
-
-#mytable th, #mytable td {
-padding: 12px;
-	text-align: left;
-	border-bottom: 1px solid #ddd;
-}
-
-#mytable th {
-	background-color: #f4f4f4;
-color: #333;
-}
-
-#mytable tr:hover {
-	background-color: #f9f9f9;
-}
 </style>
 </head>
 <body>
