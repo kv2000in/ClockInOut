@@ -165,25 +165,32 @@ async function loadQGendaURL() {
 	};
 }
 
-function bgcalendarfetch (calendarData) {     
-	
-
-	
+function bgcalendarfetch(calendarData) {
 	if (calendarData) {
-		
 		const events = parseICalendar(calendarData);
+		const eventSummaryMap = new Map();  // To store date -> concatenated summaries
 		
 			// Process and store events in IndexedDB
 		for (const event of events) {
-			const eventDate = formatQDate(formatDateTime(new Date(parseCustomDate(event.details.start.replace(/\r$/, '')))));
-			storeAssignmentInDB(eventDate, event.details.summary);
+			const eventDate = formatQDate(formatDateTime(new Date(parseCustomDate(event.details.date.replace(/\r$/, '')))));
+			
+			if (eventSummaryMap.has(eventDate)) {
+					// If the date already exists, concatenate the summaries
+				const currentSummary = eventSummaryMap.get(eventDate);
+				eventSummaryMap.set(eventDate, currentSummary + ' / ' + event.details.summary);
+			} else {
+					// Otherwise, set the summary for the new date
+				eventSummaryMap.set(eventDate, event.details.summary);
+			}
 		}
 		
-		
+			// Store concatenated events in IndexedDB
+		for (const [eventDate, summary] of eventSummaryMap) {
+			storeAssignmentInDB(eventDate, summary);
+		}
 	}
-
-
 }
+
 
 async function fetchCalendar(url) {
 	try {
@@ -272,13 +279,17 @@ function parseICalendar(data) {
 	
 	for (const line of lines) {
 		if (line.startsWith('BEGIN:VEVENT')) {
-			event = { details: {} };
+			event = {
+			details: {}
+			};
 		} else if (line.startsWith('SUMMARY:')) {
-			event.details.summary = line.replace('SUMMARY:', '');
+			event.details.summary = line.replace('SUMMARY:', '').trim();
 		} else if (line.startsWith('DTSTART;VALUE=DATE:')) {
-			event.details.start = line.replace('DTSTART;VALUE=DATE:', '');
-		} else if (line.startsWith('DTEND;VALUE=DATE:')) {
-			event.details.end = line.replace('DTEND;VALUE=DATE:', '');
+			event.details.date = line.replace('DTSTART;VALUE=DATE:', '').trim();
+		} else if (line.startsWith('DTSTART:')) {
+				// Extract date part from the format like "20240703T110000Z"
+			const dateTime = line.replace('DTSTART:', '').trim();
+			event.details.date = dateTime.substring(0, 8);  // Extract just the date part: YYYYMMDD
 		} else if (line.startsWith('END:VEVENT')) {
 			if (event) {
 				events.push(event);
@@ -286,8 +297,10 @@ function parseICalendar(data) {
 			}
 		}
 	}
+	
 	return events;
-	}
+}
+
 
 function formatQDate(date) {
 	return date.split('T')[0];
