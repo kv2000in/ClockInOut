@@ -1025,11 +1025,11 @@ async function handleUpdatedAssignment(primaryKey){
 															 const editButton = document.createElement("button");
 															 
 															 // Create edit icon (SVG)
-															 const svgEditIcon = createEditIcon();  // Custom function for SVG creation
-															 editButton.appendChild(svgEditIcon);
-															 editButton.onclick = () => editTimes(individualresult.id, "clockIn");
+															// const svgEditIcon = createEditIcon();  // Custom function for SVG creation
+															 //editButton.appendChild(svgEditIcon);
+															 //editButton.onclick = () => editTimes(individualresult.id, "clockIn");
 															 clockInCell.appendChild(myclockInInput);
-															 clockInCell.appendChild(editButton);
+															 //clockInCell.appendChild(editButton);
 															 } else {
 															 const clockInButton = document.createElement("button");
 															 clockInButton.textContent = "Clock In";
@@ -1046,11 +1046,11 @@ async function handleUpdatedAssignment(primaryKey){
 															 myclockOutInput.value = individualresult.clockOutTime;
 															 const editButton = document.createElement("button");
 															 
-															 const svgEditIcon = createEditIcon();  // Custom function for SVG creation
-															 editButton.appendChild(svgEditIcon);
-															 editButton.onclick = () => editTimes(individualresult.id, "clockOut");
+															 //const svgEditIcon = createEditIcon();  // Custom function for SVG creation
+															 //editButton.appendChild(svgEditIcon);
+															 //editButton.onclick = () => editTimes(individualresult.id, "clockOut");
 															 clockOutCell.appendChild(myclockOutInput);
-															 clockOutCell.appendChild(editButton);
+															 //clockOutCell.appendChild(editButton);
 															 } else {
 															 const ClockOutTimeInputfromTable = document.createElement("input");
 															 ClockOutTimeInputfromTable.type = "datetime-local";
@@ -1077,7 +1077,7 @@ async function handleUpdatedAssignment(primaryKey){
 											  
 												  // Append all rows to the table
 											  mytable.appendChild(headerRow);
-											  mytable.appendChild(idRow);
+											  //mytable.appendChild(idRow);
 											  mytable.appendChild(dateRow);
 											  mytable.appendChild(assignmentRow);
 											  mytable.appendChild(clockInRow);
