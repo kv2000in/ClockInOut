@@ -165,12 +165,12 @@ color: #007bff;
 <!-- Label and Input for Qgenda URL -->
 <label for="qgendaurl">Qgenda Calendar URL:</label>
 <input type="text" id="qgendaurl" placeholder="Enter Qgenda Calendar URL"> 
-<!-- SVG for Sync button -->
-<svg class ="icon" onclick="handleURLupdate()" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="24px" height="24px">
-<polyline points="23 4 23 10 17 10"></polyline>
-<polyline points="1 20 1 14 7 14"></polyline>
-<path d="M3.51 9a9 9 0 0114.98-3.36L23 10M1 14a9 9 0 0114.99 3.36L17 14"></path>
+<!-- SVG for Sync (Recycle) Button -->
+<svg class="icon" onclick="handleURLupdate()" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="24px" height="24px">
+<path d="M21 11.5a8.38 8.38 0 01-3.5 6.88m-2 .61A8.5 8.5 0 013.5 12H1m0 0l3-3m-3 3l3 3" />
+<path d="M3 12.5a8.38 8.38 0 013.5-6.88m2-.61A8.5 8.5 0 0120.5 12H23m0 0l-3 3m3-3l-3-3" />
 </svg>
+
 
 <br>
 <!-- Label and Input for Date -->
@@ -223,6 +223,8 @@ const calstoreName = 'calStore';
 	//calendar related items
 const clockstoreName = 'clockStore';
 	//Clock In and Out store
+const settingsstoreName = 'settingsStore';
+let callovertimerate,noncallovertimerate, callcodeswithstarttimes; 
 let db;
 
 function initDB(callback) {
@@ -269,6 +271,12 @@ function initDB(callback) {
 								 autoIncrement: true
 								 });
 		}
+		if (!db.objectStoreNames.contains(settingsstoreName)) {
+			db.createObjectStore(settingsstoreName, {
+								 keyPath: 'id',
+								 autoIncrement: true
+								 });
+		}
 		
 		navigator.serviceWorker.ready.then(function(registration) {
 										   registration.active.postMessage({
@@ -283,6 +291,7 @@ function initDB(callback) {
 		if (callback)
 			callback();
 		loadQGendaURL();
+		loadCurrentSettings();
 		navigator.serviceWorker.ready.then(function(registration) {
 										   registration.active.postMessage({
 																		   type: 'database-ready'
@@ -297,6 +306,7 @@ function initDB(callback) {
 	;
 }
 
+
 function getTransaction(storeName, mode) {
 		//Check if dB is ready or initialized.
 	if (db && db.objectStoreNames.contains([storeName])) {
@@ -307,6 +317,10 @@ function getTransaction(storeName, mode) {
 	}
 }
 
+async function loadCurrentSettings(){
+const store = getTransaction(settingsstoreName, 'readonly');	
+	
+}
 async function saveQGendaURL(url) {
 	const store = getTransaction(calstoreName, 'readwrite');
 	store.put({
@@ -835,6 +849,8 @@ function calculateHoursWorked(clockInTime, clockOutTime) {
 }
 
 function calculateOvertime(clockOutTime, assignment, date, clockInTime) {
+	const clockOut = new Date(clockOutTime);
+	const clockIn = new Date(clockInTime);
 		// Extract day of the week
 	const dayOfWeek = new Date(`${date}T00:00:00`).getDay(); // Avoids GMT/UTC issue by using midnight time
 	
@@ -846,7 +862,7 @@ function calculateOvertime(clockOutTime, assignment, date, clockInTime) {
 	
 		// If the day is Saturday (6) or Sunday (0), calculate total time as overtime
 	if (dayOfWeek === 0 || dayOfWeek === 6) {
-		overtime = (new Date(clockOutTime) - new Date(clockInTime)) / (1000 * 60 * 60); // Calculate total hours
+		overtime = (clockOut - clockIn) / (1000 * 60 * 60); // Calculate total hours
 		console.log(`Weekend Overtime: ${overtime}`);
 	} else {
 			// Convert endOfDay string to local time zone
@@ -863,22 +879,22 @@ function calculateOvertime(clockOutTime, assignment, date, clockInTime) {
 			console.log(`Next Day 1 AM: ${nextDay1AM}`);
 			
 				// Overtime if clockOut is after 1 AM the next day
-			if (clockOutTime > nextDay1AM) {
-				overtime = (clockOutTime - nextDay1AM) / (1000 * 60 * 60); // Hours in overtime
+			if (clockOut > nextDay1AM) {
+				overtime = (clockOut - nextDay1AM) / (1000 * 60 * 60); // Hours in overtime
 				console.log(`Overtime after 1 AM: ${overtime}`);
 			}
 			
 				// Overtime if clockIn is before 2 PM
 			const cutoffTime2PM = new Date(`${date}T14:00:00`.replace("T", " ")); // Local time
-			if (clockInTime < cutoffTime2PM) {
-				overtime += (cutoffTime2PM - clockInTime) / (1000 * 60 * 60); // Add early overtime hours
+			if (clockIn < cutoffTime2PM) {
+				overtime += (cutoffTime2PM - clockIn) / (1000 * 60 * 60); // Add early overtime hours
 				console.log(`Overtime before 2 PM: ${overtime}`);
 			}
 		} else {
 				// Standard overtime calculation for non-CC assignments
 			console.log(`Non-CC Assignment detected`);
-			if (clockOutTime > endOfDay) {
-				overtime = (clockOutTime - endOfDay) / (1000 * 60 * 60); // Hours in overtime
+			if (clockOut > endOfDay) {
+				overtime = (clockOut - endOfDay) / (1000 * 60 * 60); // Hours in overtime
 				console.log(`Overtime after 5 PM: ${overtime}`);
 			}
 		}
