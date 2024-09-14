@@ -40,7 +40,7 @@ color: #2c3e50;
 
 /* Inputs & Buttons */
 input[type="text"], input[type="datetime-local"], input[type="date"], button {
-width: 100%;
+//width: 100%;
 padding: 12px;
 margin: 10px 0;
 border: 1px solid #ccc;
@@ -172,7 +172,7 @@ color: #007bff;
 <path d="M3.51 9a9 9 0 0114.98-3.36L23 10M1 14a9 9 0 0114.99 3.36L17 14"></path>
 </svg>
 
-
+<br>
 <!-- Label and Input for Date -->
 <label for="dateTimeInput">Select Date:</label>
 <input type="date" id="dateTimeInput">
@@ -1018,7 +1018,11 @@ async function handleUpdatedAssignment(primaryKey){
 														 
 														 if (individualresult.clockInTime) {
 														 // If clockInTime exists, display it and add an Edit button
-														 clockInCell.textContent = individualresult.clockInTime + " ";
+														 const myclockInInput = document.createElement("input");
+														 myclockInInput.type = "datetime-local";
+														 myclockInInput.value = individualresult.clockInTime;
+														 
+														 //clockInCell.textContent = individualresult.clockInTime + " ";
 														 const editButton = document.createElement("button");
 														 
 														 // Create the SVG element for the edit icon
@@ -1050,6 +1054,7 @@ async function handleUpdatedAssignment(primaryKey){
 														 editButton.onclick = () => editTimes(individualresult.id, "clockIn");
 														 
 														 // Append the button with the SVG icon to the clockInCell
+														 clockInCell.appendChild(myclockInInput);
 														 clockInCell.appendChild(editButton);
 														 } else {
 														 // If clockInTime is null, add a Clock In button
@@ -1066,7 +1071,11 @@ async function handleUpdatedAssignment(primaryKey){
 														 
 														 if (individualresult.clockOutTime) {
 														 // If clockOutTime exists, display it and add an Edit button
-														 clockOutCell.textContent = individualresult.clockOutTime + " ";
+														 const myclockOutInput = document.createElement("input");
+														 myclockOutInput.type = "datetime-local";
+														 myclockOutInput.value = individualresult.clockOutTime;
+														 
+														 //clockOutCell.textContent = individualresult.clockOutTime + " ";
 														 const editButton = document.createElement("button");
 														 
 														 // Create the SVG element for the edit icon
@@ -1098,7 +1107,8 @@ async function handleUpdatedAssignment(primaryKey){
 														 editButton.onclick = () => editTimes(individualresult.id, "clockOut");
 														 
 														 // Append the button with the SVG icon to the clockInCell
-														 clockInCell.appendChild(editButton);
+														 clockOutCell.appendChild(myclockOutInput);
+														 clockOutCell.appendChild(editButton);
 														 } else {
 														 // If clockOutTime is null, add a Clock Out button
 														 const ClockOutTimeInputfromTable = document.createElement("input");
