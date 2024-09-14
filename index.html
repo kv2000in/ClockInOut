@@ -1033,7 +1033,7 @@ async function handleUpdatedAssignment(primaryKey){
 															 if (individualresult.clockInTime) {
 															 const myclockInInput = document.createElement("input");
 															 myclockInInput.type = "datetime-local";
-															 myclockOutInput.id = "clockIn"+"input"+individualresult.id;
+															 myclockInInput.id = "clockIn"+"input"+individualresult.id;
 															 myclockInInput.value = individualresult.clockInTime;
 															 myclockInInput.onchange = () => editTimesfromInput(individualresult.id, "clockIn");
 															 //const editButton = document.createElement("button");
