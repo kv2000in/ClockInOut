@@ -69,7 +69,7 @@ button:hover {
 
 /* Table Styling */
 #mytable {
-width: 100%;
+//width: 100%;
 	margin-top: 20px;
 	border-collapse: collapse;
 	table-layout: fixed; /* Prevent horizontal overflow */
@@ -580,7 +580,19 @@ function downloadCSV(csvContent, filename) {
 										  dateTimeInput.value = whichTime === 'clockIn' ? record.clockInTime || localDateTime : record.clockOutTime || localDateTime;
 										  }
 
-										  
+async function editTimesfromInput(primaryKey, whichTime) {
+	currentPrimaryKey = primaryKey;
+	currentWhichTime = whichTime;
+
+	const record = await getRecordById(primaryKey);
+	const localDateTime = formatDateTime(new Date());
+	
+		// Set the default value of the date-time picker
+	const dateTimeInput = document.getElementById(whichTime+'input'+primaryKey);
+	if (dateTimeInput) {
+		updateRecord(currentPrimaryKey, currentWhichTime, dateTimeInput.value);
+	}
+}
 										  async function updateRecord(primaryKey, whichTime, selectedDateTime) {
 										  const store = getTransaction(clockstoreName, 'readwrite');
 										  const updateRequest = store.get(primaryKey);
@@ -973,7 +985,7 @@ async function handleUpdatedAssignment(primaryKey){
 										  if (result && result.length > 0) {
 												  // Create the table structure with row headers for each field (ID, Date, Assignment, etc.)
 											  const headerRow = document.createElement("tr");
-											  const idRow = document.createElement("tr");
+											 // const idRow = document.createElement("tr");
 											  const dateRow = document.createElement("tr");
 											  const assignmentRow = document.createElement("tr");
 											  const clockInRow = document.createElement("tr");
@@ -982,7 +994,7 @@ async function handleUpdatedAssignment(primaryKey){
 											  
 												  // Add row headers
 											  headerRow.appendChild(document.createElement("th"));  // Empty corner cell
-											  idRow.appendChild(document.createElement("th")).textContent = "ID";
+											  //idRow.appendChild(document.createElement("th")).textContent = "ID";
 											  dateRow.appendChild(document.createElement("th")).textContent = "Date";
 											  assignmentRow.appendChild(document.createElement("th")).textContent = "Assignment";
 											  clockInRow.appendChild(document.createElement("th")).textContent = "Clock In";
@@ -997,9 +1009,9 @@ async function handleUpdatedAssignment(primaryKey){
 															 //headerRow.appendChild(headerCell);
 															 
 															 // ID Cell
-															 const idCell = document.createElement("td");
-															 idCell.textContent = individualresult.id;
-															 idRow.appendChild(idCell);
+															 //const idCell = document.createElement("td");
+															 //idCell.textContent = individualresult.id;
+															 //idRow.appendChild(idCell);
 															 
 															 // Date Cell
 															 const dateCell = document.createElement("td");
@@ -1021,8 +1033,10 @@ async function handleUpdatedAssignment(primaryKey){
 															 if (individualresult.clockInTime) {
 															 const myclockInInput = document.createElement("input");
 															 myclockInInput.type = "datetime-local";
+															 myclockOutInput.id = "clockIn"+"input"+individualresult.id;
 															 myclockInInput.value = individualresult.clockInTime;
-															 const editButton = document.createElement("button");
+															 myclockInInput.onchange = () => editTimesfromInput(individualresult.id, "clockIn");
+															 //const editButton = document.createElement("button");
 															 
 															 // Create edit icon (SVG)
 															// const svgEditIcon = createEditIcon();  // Custom function for SVG creation
@@ -1043,8 +1057,10 @@ async function handleUpdatedAssignment(primaryKey){
 															 if (individualresult.clockOutTime) {
 															 const myclockOutInput = document.createElement("input");
 															 myclockOutInput.type = "datetime-local";
+															 myclockOutInput.id = "clockOut"+"input"+individualresult.id;
 															 myclockOutInput.value = individualresult.clockOutTime;
-															 const editButton = document.createElement("button");
+															 myclockOutInput.onchange = () => editTimesfromInput(individualresult.id, "clockOut");
+															 //const editButton = document.createElement("button");
 															 
 															 //const svgEditIcon = createEditIcon();  // Custom function for SVG creation
 															 //editButton.appendChild(svgEditIcon);
