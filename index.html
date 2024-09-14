@@ -981,126 +981,104 @@ async function handleUpdatedAssignment(primaryKey){
 										  const mytable = document.getElementById("mytable");
 												  // Clear the table if needed
 											  mytable.innerHTML = "";
-										  
-										  if (result && result.length > 0) {
-												  // Create the table structure with row headers for each field (ID, Date, Assignment, etc.)
-											  const headerRow = document.createElement("tr");
-											 // const idRow = document.createElement("tr");
-											  const dateRow = document.createElement("tr");
-											  const assignmentRow = document.createElement("tr");
-											  const clockInRow = document.createElement("tr");
-											  const clockOutRow = document.createElement("tr");
-											  const deleteRow = document.createElement("tr");
 											  
-												  // Add row headers
-											  headerRow.appendChild(document.createElement("th"));  // Empty corner cell
-											  //idRow.appendChild(document.createElement("th")).textContent = "ID";
-											  dateRow.appendChild(document.createElement("th")).textContent = "Date";
-											  assignmentRow.appendChild(document.createElement("th")).textContent = "Assignment";
-											  clockInRow.appendChild(document.createElement("th")).textContent = "Clock In";
-											  clockOutRow.appendChild(document.createElement("th")).textContent = "Clock Out";
-											  deleteRow.appendChild(document.createElement("th")).textContent = "Delete";
-											  
-												  // Append each individual result as columns in the respective rows
-											  result.forEach(function(individualresult) {
-															 // Header for this column (can be left blank if you don't need a column label)
-															 //const headerCell = document.createElement("th");
-															 //headerCell.textContent = `Result ${individualresult.id}`;
-															 //headerRow.appendChild(headerCell);
-															 
-															 // ID Cell
-															 //const idCell = document.createElement("td");
-															 //idCell.textContent = individualresult.id;
-															 //idRow.appendChild(idCell);
-															 
-															 // Date Cell
-															 const dateCell = document.createElement("td");
-															 dateCell.textContent = individualresult.date;
-															 dateRow.appendChild(dateCell);
-															 
-															 // Assignment Cell
-															 const assignmentCell = document.createElement("td");
-															 const assignmentInputfromTable = document.createElement("input");
-															 assignmentInputfromTable.type = "text";
-															 assignmentInputfromTable.id = "storedassignmentInput" + individualresult.id;
-															 assignmentInputfromTable.value = individualresult.assignment;
-															 assignmentInputfromTable.oninput = () => debouncedHandleUpdatedAssignment(individualresult.id);
-															 assignmentCell.appendChild(assignmentInputfromTable);
-															 assignmentRow.appendChild(assignmentCell);
-															 
-															 // Clock In Cell
-															 const clockInCell = document.createElement("td");
-															 if (individualresult.clockInTime) {
-															 const myclockInInput = document.createElement("input");
-															 myclockInInput.type = "datetime-local";
-															 myclockInInput.id = "clockIn"+"input"+individualresult.id;
-															 myclockInInput.value = individualresult.clockInTime;
-															 myclockInInput.onchange = () => editTimesfromInput(individualresult.id, "clockIn");
-															 //const editButton = document.createElement("button");
-															 
-															 // Create edit icon (SVG)
-															// const svgEditIcon = createEditIcon();  // Custom function for SVG creation
-															 //editButton.appendChild(svgEditIcon);
-															 //editButton.onclick = () => editTimes(individualresult.id, "clockIn");
-															 clockInCell.appendChild(myclockInInput);
-															 //clockInCell.appendChild(editButton);
-															 } else {
-															 const clockInButton = document.createElement("button");
-															 clockInButton.textContent = "Clock In";
-															 clockInButton.onclick = () => clockIn(individualresult.id);
-															 clockInCell.appendChild(clockInButton);
-															 }
-															 clockInRow.appendChild(clockInCell);
-															 
-															 // Clock Out Cell
-															 const clockOutCell = document.createElement("td");
-															 if (individualresult.clockOutTime) {
-															 const myclockOutInput = document.createElement("input");
-															 myclockOutInput.type = "datetime-local";
-															 myclockOutInput.id = "clockOut"+"input"+individualresult.id;
-															 myclockOutInput.value = individualresult.clockOutTime;
-															 myclockOutInput.onchange = () => editTimesfromInput(individualresult.id, "clockOut");
-															 //const editButton = document.createElement("button");
-															 
-															 //const svgEditIcon = createEditIcon();  // Custom function for SVG creation
-															 //editButton.appendChild(svgEditIcon);
-															 //editButton.onclick = () => editTimes(individualresult.id, "clockOut");
-															 clockOutCell.appendChild(myclockOutInput);
-															 //clockOutCell.appendChild(editButton);
-															 } else {
-															 const ClockOutTimeInputfromTable = document.createElement("input");
-															 ClockOutTimeInputfromTable.type = "datetime-local";
-															 ClockOutTimeInputfromTable.id = "ClockOutTimeInput" + individualresult.id;
-															 ClockOutTimeInputfromTable.value = localDateTime;
-															 const clockOutButton = document.createElement("button");
-															 clockOutButton.textContent = "Clock Out";
-															 clockOutButton.onclick = () => clockOut(individualresult.id);
-															 clockOutCell.appendChild(ClockOutTimeInputfromTable);
-															 clockOutCell.appendChild(clockOutButton);
-															 }
-															 clockOutRow.appendChild(clockOutCell);
-															 
-															 // Delete Button Cell
-															 const deleteCell = document.createElement("td");
-															 const deleteButton = document.createElement("button");
-															 
-															 const svgDeleteIcon = createDeleteIcon();  // Custom function for SVG creation
-															 deleteButton.appendChild(svgDeleteIcon);
-															 deleteButton.onclick = () => deleteRecord(individualresult.id);
-															 deleteCell.appendChild(deleteButton);
-															 deleteRow.appendChild(deleteCell);
-															 });
-											  
-												  // Append all rows to the table
-											  mytable.appendChild(headerRow);
-											  //mytable.appendChild(idRow);
-											  mytable.appendChild(dateRow);
-											  mytable.appendChild(assignmentRow);
-											  mytable.appendChild(clockInRow);
-											  mytable.appendChild(clockOutRow);
-											  mytable.appendChild(deleteRow);
-
-										  } else {
+											  if (result && result.length > 0) {
+													  // Create the table structure with row headers for each field (ID, Date, Assignment, etc.)
+												  const headerRow = document.createElement("tr");
+												  const dateRow = document.createElement("tr");
+												  const assignmentRow = document.createElement("tr");
+												  const clockInRow = document.createElement("tr");
+												  const clockOutRow = document.createElement("tr");
+												  const deleteRow = document.createElement("tr");
+												  
+													  // Add row headers
+												  headerRow.appendChild(document.createElement("th")); // Empty corner cell
+												  dateRow.appendChild(document.createElement("th")).textContent = "Date";
+												  assignmentRow.appendChild(document.createElement("th")).textContent = "Assignment";
+												  clockInRow.appendChild(document.createElement("th")).textContent = "Clock In";
+												  clockOutRow.appendChild(document.createElement("th")).textContent = "Clock Out";
+												  deleteRow.appendChild(document.createElement("th")).textContent = "Delete";
+												  
+													  // Append each individual result as columns in the respective rows
+												  result.forEach(function(individualresult) {
+																 // Date Cell
+																 const dateCell = document.createElement("td");
+																 dateCell.textContent = individualresult.date;
+																 dateCell.setAttribute("data-column-id", `column${individualresult.id}`); // Assign data-column-id
+																 dateRow.appendChild(dateCell);
+																 
+																 // Assignment Cell
+																 const assignmentCell = document.createElement("td");
+																 const assignmentInputfromTable = document.createElement("input");
+																 assignmentInputfromTable.type = "text";
+																 assignmentInputfromTable.id = "storedassignmentInput" + individualresult.id;
+																 assignmentInputfromTable.value = individualresult.assignment;
+																 assignmentInputfromTable.oninput = () => debouncedHandleUpdatedAssignment(individualresult.id);
+																 assignmentCell.appendChild(assignmentInputfromTable);
+																 assignmentCell.setAttribute("data-column-id", `column${individualresult.id}`); // Assign data-column-id
+																 assignmentRow.appendChild(assignmentCell);
+																 
+																 // Clock In Cell
+																 const clockInCell = document.createElement("td");
+																 if (individualresult.clockInTime) {
+																 const myclockInInput = document.createElement("input");
+																 myclockInInput.type = "datetime-local";
+																 myclockInInput.id = "clockIn" + "input" + individualresult.id;
+																 myclockInInput.value = individualresult.clockInTime;
+																 myclockInInput.onchange = () => editTimesfromInput(individualresult.id, "clockIn");
+																 clockInCell.appendChild(myclockInInput);
+																 } else {
+																 const clockInButton = document.createElement("button");
+																 clockInButton.textContent = "Clock In";
+																 clockInButton.onclick = () => clockIn(individualresult.id);
+																 clockInCell.appendChild(clockInButton);
+																 }
+																 clockInCell.setAttribute("data-column-id", `column${individualresult.id}`); // Assign data-column-id
+																 clockInRow.appendChild(clockInCell);
+																 
+																 // Clock Out Cell
+																 const clockOutCell = document.createElement("td");
+																 if (individualresult.clockOutTime) {
+																 const myclockOutInput = document.createElement("input");
+																 myclockOutInput.type = "datetime-local";
+																 myclockOutInput.id = "clockOut" + "input" + individualresult.id;
+																 myclockOutInput.value = individualresult.clockOutTime;
+																 myclockOutInput.onchange = () => editTimesfromInput(individualresult.id, "clockOut");
+																 clockOutCell.appendChild(myclockOutInput);
+																 } else {
+																 const ClockOutTimeInputfromTable = document.createElement("input");
+																 ClockOutTimeInputfromTable.type = "datetime-local";
+																 ClockOutTimeInputfromTable.id = "ClockOutTimeInput" + individualresult.id;
+																 ClockOutTimeInputfromTable.value = localDateTime;
+																 const clockOutButton = document.createElement("button");
+																 clockOutButton.textContent = "Clock Out";
+																 clockOutButton.onclick = () => clockOut(individualresult.id);
+																 clockOutCell.appendChild(ClockOutTimeInputfromTable);
+																 clockOutCell.appendChild(clockOutButton);
+																 }
+																 clockOutCell.setAttribute("data-column-id", `column${individualresult.id}`); // Assign data-column-id
+																 clockOutRow.appendChild(clockOutCell);
+																 
+																 // Delete Button Cell
+																 const deleteCell = document.createElement("td");
+																 const deleteButton = document.createElement("button");
+																 const svgDeleteIcon = createDeleteIcon(); // Custom function for SVG creation
+																 deleteButton.appendChild(svgDeleteIcon);
+																 deleteButton.onclick = () => deleteRecord(individualresult.id);
+																 deleteCell.appendChild(deleteButton);
+																 deleteCell.setAttribute("data-column-id", `column${individualresult.id}`); // Assign data-column-id
+																 deleteRow.appendChild(deleteCell);
+																 });
+												  
+													  // Append all rows to the table
+												  mytable.appendChild(headerRow);
+												  mytable.appendChild(dateRow);
+												  mytable.appendChild(assignmentRow);
+												  mytable.appendChild(clockInRow);
+												  mytable.appendChild(clockOutRow);
+												  mytable.appendChild(deleteRow);
+											  }
+ else {
 										  // If no results, ensure clockInOut is visible
 										  //document.getElementById('clockInOut').style.display = "block";
 										  console.log("No assignments found for today.");
@@ -1111,24 +1089,26 @@ async function handleUpdatedAssignment(primaryKey){
 										  }
 
 
-										  async function deleteRecord(primaryKey) {
-										  const store = getTransaction(clockstoreName, 'readwrite'); // Open a readwrite transaction
-										  const request = store.delete(primaryKey); // Delete the record with the given primary key
-										  
-										  request.onsuccess = function(event) {
-										  console.log(`Record with primaryKey ${primaryKey} deleted successfully!`);
-										  
-										  // Remove the corresponding row from the UI
-										  const rowToDelete = document.getElementById(`row${primaryKey}`);
-										  if (rowToDelete) {
-										  rowToDelete.remove(); // Remove the row from the table
-										  }
-										  };
-										  
-										  request.onerror = function(event) {
-										  console.error('Error deleting record:', event.target.error); // Use event.target.error for more detailed error information
-										  };
-										  }
+async function deleteRecord(primaryKey) {
+	const store = getTransaction(clockstoreName, 'readwrite'); // Open a readwrite transaction
+	const request = store.delete(primaryKey); // Delete the record with the given primary key
+	
+	request.onsuccess = function(event) {
+		console.log(`Record with primaryKey ${primaryKey} deleted successfully!`);
+		
+			// Remove the corresponding column from the UI
+		const columnToDelete = document.querySelectorAll(`[data-column-id="column${primaryKey}"]`);
+		
+		columnToDelete.forEach(cell => {
+							   cell.remove(); // Remove each cell corresponding to the column for the deleted record
+							   });
+	};
+	
+	request.onerror = function(event) {
+		console.error('Error deleting record:', event.target.error); // Use event.target.error for more detailed error information
+	};
+}
+
 
 	// Function to create the Edit SVG Icon
 function createEditIcon() {
