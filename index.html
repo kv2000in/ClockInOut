@@ -39,8 +39,8 @@ color: #2c3e50;
 }
 
 /* Inputs & Buttons */
-input[type="text"], input[type="datetime-local"], input[type="date"], button {
-//width: 100%;
+input[type="text"], input[type="datetime-local"], input[type="date"]{
+width: min-content;
 padding: 12px;
 margin: 10px 0;
 border: 1px solid #ccc;
@@ -187,21 +187,21 @@ color: #007bff;
 <table id="mytable"></table>
 <!-- Clock In/Out Section -->
 <div id="clockInOut">
-<label for="ClockInTimeInput">Clock In Time:</label>
+<label for="ClockInTimeInput">Clock In Time:</label><br>
 <input type="datetime-local" id="ClockInTimeInput">
-<button id="clockInButton" onclick="clockIn('0')">Clock In</button>
+<button id="clockInButton" onclick="clockIn('0')">Clock In</button><br>
 
-<label for="ClockOutTimeInput">Clock Out Time:</label>
+<label for="ClockOutTimeInput">Clock Out Time:</label><br>
 <input type="datetime-local" id="ClockOutTimeInput">
-<button id="clockOutButton" onclick="clockOut('0')">Clock Out</button>
+<button id="clockOutButton" onclick="clockOut('0')">Clock Out</button><br>
 </div>
 
 <!-- Section for Getting Records -->
 <h2>Get Records</h2>
-<label for="startDate">Start Date:</label>
+<label for="startDate">From:</label>
 <input type="date" id="startDate"><br>
 
-<label for="endDate">End Date:</label>
+<label for="endDate">To:</label>
 <input type="date" id="endDate">
 <button onclick="getRecords()">Get Records</button>
 <button onclick="getLastWeekRecords()">Last Week</button>
@@ -992,9 +992,9 @@ async function handleUpdatedAssignment(primaryKey){
 												  // Append each individual result as columns in the respective rows
 											  result.forEach(function(individualresult) {
 															 // Header for this column (can be left blank if you don't need a column label)
-															 const headerCell = document.createElement("th");
-															 headerCell.textContent = `Result ${individualresult.id}`;
-															 headerRow.appendChild(headerCell);
+															 //const headerCell = document.createElement("th");
+															 //headerCell.textContent = `Result ${individualresult.id}`;
+															 //headerRow.appendChild(headerCell);
 															 
 															 // ID Cell
 															 const idCell = document.createElement("td");
