@@ -600,10 +600,9 @@ async function editTimesfromInput(primaryKey, whichTime) {
 
 	const record = await getRecordById(primaryKey);
 	const localDateTime = formatDateTime(new Date());
-	
-		// Set the default value of the date-time picker
 	const dateTimeInput = document.getElementById(whichTime+'input'+primaryKey);
 	if (dateTimeInput) {
+		
 		updateRecord(currentPrimaryKey, currentWhichTime, dateTimeInput.value);
 	}
 }
@@ -620,21 +619,23 @@ async function editTimesfromInput(primaryKey, whichTime) {
 										  } else if (whichTime === 'clockOut') {
 										  record.clockOutTime = selectedDateTime;
 										  }
+										//Calculate overtime, hours worked etc based on new times.
+											  record.assignment = document.getElementById('storedassignmentInput' + primaryKey).value;
+											  
+												  // Calculate hours worked
+											  record.hoursWorked = calculateHoursWorked(record.clockInTime, record.clockOutTime);
+											  
+												  // Calculate overtime
+											  record.overtime = calculateOvertime(record.clockOutTime, record.assignment, record.date, record.clockInTime);
+											  
+												  // Calculate session pay
+											  record.sessionPay = calculateSessionPay(record.overtime, record.assignment);  
 										  
 										  // Save the updated record back into the object store
 										  const putRequest = store.put(record);
 										  putRequest.onsuccess = function() {
 										  // Update the displayed value in the corresponding cell
-										  const cellId = whichTime === 'clockIn' ? 'clockIn' + primaryKey : 'clockOut' + primaryKey;
-										  const cell = document.getElementById(cellId);
-										  if (cell) {
-										  cell.textContent = selectedDateTime + " ";
-										  // Refresh the Edit button
-										  const editButton = document.createElement("button");
-										  editButton.textContent = "Edit";
-										  editButton.onclick = () => editTimes(primaryKey, whichTime);
-										  cell.appendChild(editButton);
-										  }
+											  displayTodaysAssignment();
 										  };
 										  putRequest.onerror = function(event) {
 										  console.error('Error updating record:', event.target.error);
@@ -760,10 +761,10 @@ async function clockOut(primaryKey) {
 			record.assignment = document.getElementById('storedassignmentInput' + primaryKey).value;
 			
 				// Calculate hours worked
-			record.hoursWorked = calculateHoursWorked(clockInTime, clockOut);
+			record.hoursWorked = calculateHoursWorked(clockInTime, clockOutTime);
 			
 				// Calculate overtime
-			record.overtime = calculateOvertime(clockOut, record.assignment, record.date, clockInTime);
+			record.overtime = calculateOvertime(clockOutTime, record.assignment, record.date, clockInTime);
 			
 				// Calculate session pay
 			record.sessionPay = calculateSessionPay(record.overtime, record.assignment);
@@ -841,7 +842,7 @@ async function clockOut(primaryKey) {
 
 	// Function to calculate hours worked in 15-minute increments
 function calculateHoursWorked(clockInTime, clockOutTime) {
-	const diff = clockOutTime - clockInTime; // Difference in milliseconds
+	const diff = new Date(clockOutTime) - new Date(clockInTime); // Difference in milliseconds
 	const diffInMinutes = Math.round(diff / (1000 * 60)); // Difference in minutes
 	const roundedMinutes = Math.ceil(diffInMinutes / 15) * 15; // Round up to nearest 15 minutes
 	const hoursWorked = roundedMinutes / 60; // Convert to hours
@@ -1005,6 +1006,9 @@ async function handleUpdatedAssignment(primaryKey){
 												  const assignmentRow = document.createElement("tr");
 												  const clockInRow = document.createElement("tr");
 												  const clockOutRow = document.createElement("tr");
+												  const hoursWorkedRow = document.createElement("tr");
+												  const overtimeRow = document.createElement("tr");
+												  const sessionPayRow = document.createElement("tr");
 												  const deleteRow = document.createElement("tr");
 												  
 													  // Add row headers
@@ -1013,6 +1017,9 @@ async function handleUpdatedAssignment(primaryKey){
 												  assignmentRow.appendChild(document.createElement("th")).textContent = "Assignment";
 												  clockInRow.appendChild(document.createElement("th")).textContent = "Clock In";
 												  clockOutRow.appendChild(document.createElement("th")).textContent = "Clock Out";
+												  hoursWorkedRow.appendChild(document.createElement("th")).textContent = "Hours Worked";
+												  overtimeRow.appendChild(document.createElement("th")).textContent = "Over Time";
+												  sessionPayRow.appendChild(document.createElement("th")).textContent = "Session Pay";
 												  deleteRow.appendChild(document.createElement("th")).textContent = "Delete";
 												  
 													  // Append each individual result as columns in the respective rows
@@ -1074,6 +1081,32 @@ async function handleUpdatedAssignment(primaryKey){
 																 }
 																 clockOutCell.setAttribute("data-column-id", `column${individualresult.id}`); // Assign data-column-id
 																 clockOutRow.appendChild(clockOutCell);
+																 
+																 // Hours Worked Cell
+																 const hoursWorkedCell = document.createElement("td");
+																 if (individualresult.hoursWorked) {
+																 hoursWorkedCell.textContent=individualresult.hoursWorked;
+																 } 
+																 hoursWorkedCell.setAttribute("data-column-id", `column${individualresult.id}`); // Assign data-column-id
+																 hoursWorkedRow.appendChild(hoursWorkedCell);
+																 
+																 // Over Time cell
+																 const overtimeCell = document.createElement("td");
+																 if (individualresult.overtime) {
+																 overtimeCell.textContent=individualresult.overtime;
+																 } 
+																 overtimeCell.setAttribute("data-column-id", `column${individualresult.id}`); // Assign data-column-id
+																 overtimeRow.appendChild(overtimeCell);
+																 
+																 
+																 // Session Pay Cell
+																 const sessionPayCell = document.createElement("td");
+																 if (individualresult.sessionPay) {
+																 sessionPayCell.textContent=individualresult.sessionPay;
+																 } 
+																 sessionPayCell.setAttribute("data-column-id", `column${individualresult.id}`); // Assign data-column-id
+																 sessionPayRow.appendChild(sessionPayCell);
+																 
 																 
 																 // Delete Button Cell
 																 const deleteCell = document.createElement("td");

@@ -5,7 +5,8 @@ const urlsToCache = [
 					 './manifest.json',
 					 './icons/icon-192x192.webp',
 					 './icons/icon-512x512.webp',
-					 './service-worker.js'
+					 './service-worker.js',
+					 './favicon.ico'
 					 ];
 
 
@@ -61,6 +62,7 @@ self.addEventListener('activate', (event) => {
 
 const dbName = 'ClockInOutDB';
 const calstoreName = 'calStore'; //calendar related items
+const settingsstoreName = 'settingsStore';
 let db;
 
 function initDB() {
@@ -85,6 +87,12 @@ function initDB() {
 			clockStore.createIndex('date_index', ['date'], {
 								   unique: false
 								   })
+		}
+		if (!db.objectStoreNames.contains(settingsstoreName)) {
+			db.createObjectStore(settingsstoreName, {
+								 keyPath: 'id',
+								 autoIncrement: true
+								 });
 		}
 		
 		if (!db.objectStoreNames.contains(calstoreName)) {
