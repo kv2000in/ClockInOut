@@ -22,23 +22,46 @@ self.addEventListener('install', (event) => {
 self.addEventListener('fetch', (event) => {
 					  event.respondWith(
 										caches.open('dynamic-cache').then((cache) => {
-																		  return fetch(event.request).then((networkResponse) => {
-																										   // If the network fetch is successful, check if the resource is modified
-																										   if (networkResponse && networkResponse.status === 200) {
-																										   // Check if the resource has changed by using Cache-Control and ETag headers
-																										   const clonedResponse = networkResponse.clone();
-																										   cache.put(event.request, clonedResponse); // Update the cache with the latest version
-																										   }
-																										   return networkResponse; // Serve the new version
-																										   }).catch(() => {
-																													// If network fails, serve the cached resource (if available)
-																													return caches.match(event.request).then((cachedResponse) => {
-																																							return cachedResponse || Promise.reject('no-cache');
-																																							});
-																													});
+																		  return Promise.race([
+																							   fetchWithTimeout(event.request, 3000), // Set a 5-second timeout
+																							   caches.match(event.request) // Return from cache if fetch takes too long
+																							   ])
+																		  .then((networkResponse) => {
+																				if (networkResponse && networkResponse.status === 200) {
+																				const clonedResponse = networkResponse.clone();
+																				cache.put(event.request, clonedResponse); // Update cache
+																				}
+																				return networkResponse || Promise.reject('no-cache'); // Serve new version or cache
+																				})
+																		  .catch(() => {
+																				 return caches.match(event.request).then((cachedResponse) => {
+																														 return cachedResponse || Promise.reject('no-cache'); // Serve cache or reject
+																														 });
+																				 });
 																		  })
 										);
 					  });
+
+	// Helper function to add a timeout to the fetch request
+function fetchWithTimeout(request, timeout) {
+	return new Promise((resolve, reject) => {
+					   const timer = setTimeout(() => {
+												reject(new Error('Request timed out'));
+												}, timeout);
+					   
+					   fetch(request).then(
+										   (response) => {
+										   clearTimeout(timer);
+										   resolve(response);
+										   },
+										   (err) => {
+										   clearTimeout(timer);
+										   reject(err);
+										   }
+										   );
+					   });
+}
+
 
 
 self.addEventListener('activate', (event) => {

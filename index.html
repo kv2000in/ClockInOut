@@ -682,14 +682,10 @@ async function editTimesfromInput(primaryKey, whichTime) {
 										  
 										  updateRequest.onsuccess = function(event) {
 										  // Update the UI after successful clock in
-										  const clockInCell = document.getElementById('clockIn' + primaryKey);
-										  clockInCell.textContent = localDateTime + " ";
+										  
 										  
 										  // Add the Edit button next to the clockIn time
-										  const editButton = document.createElement("button");
-										  editButton.textContent = "Edit";
-										  editButton.onclick = () => editTimes(primaryKey, "clockIn"); // Pass the id to editTimes
-										  clockInCell.appendChild(editButton);
+										  
 										  };
 										  
 										  updateRequest.onerror = function(event) {
@@ -774,14 +770,10 @@ async function clockOut(primaryKey) {
 			
 			updateRequest.onsuccess = function(event) {
 					// Update the UI after successful clock out
-				const clockOutCell = document.getElementById('clockOut' + primaryKey);
-				clockOutCell.textContent = clockOutTime + " ";
+			
 				
 					// Add the Edit button next to the clockOut time
-				const editButton = document.createElement("button");
-				editButton.textContent = "Edit";
-				editButton.onclick = () => editTimes(primaryKey, "clockOut");
-				clockOutCell.appendChild(editButton);
+			
 			};
 			
 			updateRequest.onerror = function(event) {
@@ -864,6 +856,7 @@ function calculateOvertime(clockOutTime, assignment, date, clockInTime) {
 		// If the day is Saturday (6) or Sunday (0), calculate total time as overtime
 	if (dayOfWeek === 0 || dayOfWeek === 6) {
 		overtime = (clockOut - clockIn) / (1000 * 60 * 60); // Calculate total hours
+		overtime+=1; // Add an hour of activation over the weekends.
 		console.log(`Weekend Overtime: ${overtime}`);
 	} else {
 			// Convert endOfDay string to local time zone
@@ -1125,6 +1118,9 @@ async function handleUpdatedAssignment(primaryKey){
 												  mytable.appendChild(assignmentRow);
 												  mytable.appendChild(clockInRow);
 												  mytable.appendChild(clockOutRow);
+												  mytable.appendChild(hoursWorkedRow);
+												  mytable.appendChild(overtimeRow);
+												  mytable.appendChild(sessionPayclockoutcellRow);
 												  mytable.appendChild(deleteRow);
 											  }
  else {
