@@ -115,7 +115,7 @@ color: #333;
 	}
 	
 	#mytable th, #mytable td {
-		font-size: 12px; /* Reduce the font size on smaller screens */
+		//font-size: 12px; /* Reduce the font size on smaller screens */
 	}
 }
 
@@ -706,7 +706,7 @@ async function editTimesfromInput(primaryKey, whichTime) {
 													   clockOutTime: null, // Leave clockOutTime as null
 													   });
 										  
-										  displayTodaysAssignment();
+										  
 										  } else {
 										  alert('Please enter your assignment and select a date/time.');
 										  }
@@ -716,6 +716,7 @@ async function editTimesfromInput(primaryKey, whichTime) {
 										  request.onerror = function(event) {
 										  console.log('Failed to retrieve record:', event.target.errorCode);
 										  };
+										  displayTodaysAssignment();
 										  }
 
 
@@ -819,7 +820,7 @@ async function clockOut(primaryKey) {
 							 sessionPay: calculateSessionPay(overtime, assignment),
 							 });
 				
-				displayTodaysAssignment();
+				
 			} else {
 				alert('Please enter your assignment and select a date/time.');
 			}
@@ -829,6 +830,7 @@ async function clockOut(primaryKey) {
 	request.onerror = function(event) {
 		console.log('Failed to retrieve record:', event.target.errorCode);
 	};
+	displayTodaysAssignment();
 }
 
 
