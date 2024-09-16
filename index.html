@@ -1405,16 +1405,52 @@ function createDeleteIcon() {
 										  console.log('User selected date:', selectedDate);
 										  }
 										  }
-										  // Service Worker registration
-										  if ('serviceWorker'in navigator) {
-										  window.addEventListener('load', function() {
-																  navigator.serviceWorker.register('./service-worker.js').then(function(registration) {
-																															   console.log('ServiceWorker registration successful with scope: ', registration.scope);
-																															   }).catch(function(error) {
-																																		console.log('ServiceWorker registration failed: ', error);
-																																		});
-																  });
-										  }
+if ('serviceWorker' in navigator) {
+	navigator.serviceWorker.register('/service-worker.js').then((registration) => {
+																console.log('Service Worker registered with scope: ', registration.scope);
+																
+																// Check if a new service worker is waiting to activate
+																if (registration.waiting) {
+																promptUserForHardReload(registration.waiting);
+																}
+																
+																// Listen for updates in the service worker
+																registration.addEventListener('updatefound', () => {
+																							  const newWorker = registration.installing;
+																							  
+																							  // If a new worker is found and it becomes waiting
+																							  newWorker.addEventListener('statechange', () => {
+																														 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+																														 // A new service worker is installed but waiting for activation
+																														 promptUserForHardReload(newWorker);
+																														 }
+																														 });
+																							  });
+																}).catch((error) => {
+																		 console.log('Service Worker registration failed: ', error);
+																		 });
+}
+
+	// Prompt the user for a hard reload
+function promptUserForHardReload(worker) {
+	const reloadButton = document.createElement('button');
+	reloadButton.textContent = 'New version available. Click to update!';
+	document.body.appendChild(reloadButton);
+	
+	reloadButton.addEventListener('click', () => {
+								  // Tell the new service worker to skip waiting
+								  worker.postMessage({ action: 'skipWaiting' });
+								  
+								  // Once the new service worker is activated, reload the page to fetch new assets
+								  worker.addEventListener('statechange', () => {
+														  if (worker.state === 'activated') {
+														  window.location.reload(true); // This forces a hard-reload and bypasses the cache
+														  }
+														  });
+								  });
+}
+
+
 										  </script>
 										  </body>
 										  </html>

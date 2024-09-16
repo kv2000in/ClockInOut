@@ -64,6 +64,10 @@ function fetchWithTimeout(request, timeout) {
 
 
 
+
+
+
+
 self.addEventListener('activate', (event) => {
 					  
 					  
@@ -79,6 +83,9 @@ self.addEventListener('activate', (event) => {
 																						   })
 																			);
 														 })
+									  // Once the new service worker is activated, claim the clients so it takes control immediately
+									  self.clients.claim();
+									  
 									  );
 					  });
 
@@ -149,6 +156,9 @@ function getTransaction(storeName, mode) {
 
 
 self.addEventListener('message', function(event) {
+					  if (event.data.action === 'skipWaiting') {
+					  self.skipWaiting();  // Immediately activate the new service worker
+					  };
 					  const message = event.data;
 					  
 					  if (message.type === 'fetch-calendar') {
