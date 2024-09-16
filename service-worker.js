@@ -67,27 +67,27 @@ function fetchWithTimeout(request, timeout) {
 
 
 
-
 self.addEventListener('activate', (event) => {
 					  
-					  
-					  const cacheWhitelist = [CACHE_NAME];
+					  const cacheWhitelist = [CACHE_NAME]; // Whitelist of caches to keep
 					  
 					  event.waitUntil(
-									  caches.keys().then((cacheNames) => {
-														 return Promise.all(
-																			cacheNames.map((cacheName) => {
-																						   if (cacheWhitelist.indexOf(cacheName) === -1) {
-																						   return caches.delete(cacheName);
-																						   }
-																						   })
-																			);
-														 })
-									  // Once the new service worker is activated, claim the clients so it takes control immediately
-									  self.clients.claim();
-									  
+									  // Combine both cache cleanup and claim into one Promise.all()
+									  Promise.all([
+												   caches.keys().then((cacheNames) => {
+																	  return Promise.all(
+																						 cacheNames.map((cacheName) => {
+																										if (cacheWhitelist.indexOf(cacheName) === -1) {
+																										return caches.delete(cacheName); // Delete caches not in the whitelist
+																										}
+																										})
+																						 );
+																	  }),
+												   self.clients.claim() // Claim the clients immediately after activation
+												   ])
 									  );
 					  });
+
 
 
 const dbName = 'ClockInOutDB';
