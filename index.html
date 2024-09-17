@@ -183,7 +183,7 @@ color: #007bff;
 
 <!-- Label and Input for Stored Assignment -->
 <label for="storedassignmentInput">Assignment:</label>
-<input type="text" id="storedassignmentInput" placeholder="Enter your assignment">
+<input type="text" id="storedassignmentInput0" placeholder="Enter your assignment">
 <table id="mytable"></table>
 <!-- Clock In/Out Section -->
 <div id="clockInOut">
@@ -694,7 +694,7 @@ async function editTimesfromInput(primaryKey, whichTime) {
 										  } else {
 										  console.log('Record not found');
 										  // Handle case where the record does not exist
-										  const assignment = document.getElementById('storedassignmentInput').value;
+										  const assignment = document.getElementById('storedassignmentInput'+primaryKey).value;
 										  const formattedToday = document.getElementById('dateTimeInput').value;
 										  const clockInTime = document.getElementById('ClockInTimeInput').value;
 										  if (formattedToday) {
@@ -782,7 +782,7 @@ async function clockOut(primaryKey) {
 			};
 		} else {
 			console.log('Record not found');
-			const assignmentInput = document.getElementById('storedassignmentInput');
+			const assignmentInput = document.getElementById('storedassignmentInput'+primaryKey);
 			const dateTimeInput = document.getElementById('dateTimeInput');
 			
 			if (!assignmentInput || !dateTimeInput) {
@@ -973,7 +973,7 @@ async function handleUpdatedAssignment(primaryKey){
 										  // Reset clockIn, clockOut times and buttons
 										  document.getElementById('ClockOutTimeInput').value = localDateTime;
 										  document.getElementById('ClockInTimeInput').value = formatDateTo7AM(formattedToday); // set it to the day of assignments 7 am
-										  document.getElementById('storedassignmentInput').value = null;
+										  document.getElementById('storedassignmentInput0').value = null;
 										  //document.getElementById('clockInOut').style.display = "block"; // Ensure clockInOut is visible
 
 										  
@@ -985,7 +985,7 @@ async function handleUpdatedAssignment(primaryKey){
 										  if (todayAssignment) {
 										  // Assignment for today exists in IndexedDB
 										  document.getElementById('assignmentInput').value = todayAssignment.assignment; 
-										  document.getElementById('storedassignmentInput').value = todayAssignment.assignment;
+										  document.getElementById('storedassignmentInput0').value = todayAssignment.assignment;
 										  }
 										  
 										  // Get assignments for today and update the table
