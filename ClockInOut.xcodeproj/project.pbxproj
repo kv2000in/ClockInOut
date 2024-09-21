@@ -15,12 +15,14 @@
 		2AC52F5E2C7A7CAF00D1DBE7 /* icon-192x192.webp */ = {isa = PBXFileReference; lastKnownFileType = file; name = "icon-192x192.webp"; path = "icons/icon-192x192.webp"; sourceTree = "<group>"; };
 		2AC52F5F2C7A82BA00D1DBE7 /* favicon.ico */ = {isa = PBXFileReference; lastKnownFileType = image.ico; name = favicon.ico; path = icons/favicon.ico; sourceTree = "<group>"; };
 		2AC52F602C9E679700D1DBE7 /* icon-512x512.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "icon-512x512.png"; path = "icons/icon-512x512.png"; sourceTree = "<group>"; };
+		2AC52F612C9E710900D1DBE7 /* .well-known */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ".well-known"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
 		2AC52F502C75A19900D1DBE7 = {
 			isa = PBXGroup;
 			children = (
+				2AC52F612C9E710900D1DBE7 /* .well-known */,
 				2AC52F602C9E679700D1DBE7 /* icon-512x512.png */,
 				2AC52F5F2C7A82BA00D1DBE7 /* favicon.ico */,
 				2AC52F5E2C7A7CAF00D1DBE7 /* icon-192x192.webp */,

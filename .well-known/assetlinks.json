@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "net.ddns.kv2000inn.twa",
+        "sha256_cert_fingerprints": ["F1:16:56:18:D8:22:A6:C9:31:D8:38:78:CC:8A:F1:F6:BF:61:51:B0:8B:50:7B:A7:23:1E:4F:4C:04:62:C3:3C"]
+      }
+    }]
