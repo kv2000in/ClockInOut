@@ -182,7 +182,7 @@ color: #007bff;
 <input type="hidden" id="assignmentInput">
 
 <!-- Label and Input for Stored Assignment -->
-<label for="storedassignmentInput">Assignment:</label>
+<label for="storedassignmentInput0">Assignment:</label>
 <input type="text" id="storedassignmentInput0" placeholder="Enter your assignment">
 <table id="mytable"></table>
 <!-- Clock In/Out Section -->
@@ -664,60 +664,57 @@ async function editTimesfromInput(primaryKey, whichTime) {
 										  }
 
 
-										  async function clockIn(primaryKey) {
-										  const now = new Date();
-										  const localDateTime = formatDateTime(now);
-										  const store = getTransaction(clockstoreName, 'readwrite');
-										  const request = store.get(primaryKey);
-										  
-										  request.onsuccess = function(event) {
-										  const record = event.target.result;
-										  if (record) {
-										  // Update the record with clockInTime
-										  record.clockInTime = localDateTime; // Current time
-											// redundant to update the assignemnt here as well but just in case the user happens to click the clockin or clockout faster than the debounce time of 500 ms - it will capture the updated assignment here.
-										record.assignment = document.getElementById('storedassignmentInput'+primaryKey).value;
-										  // Save the updated record back into the object store
-										  const updateRequest = store.put(record);
-										  
-										  updateRequest.onsuccess = function(event) {
-										  // Update the UI after successful clock in
-										  
-										  
-										  // Add the Edit button next to the clockIn time
-										  
-										  };
-										  
-										  updateRequest.onerror = function(event) {
-										  console.error('Error updating record:', event.target.errorCode);
-										  };
-										  } else {
-										  console.log('Record not found');
-										  // Handle case where the record does not exist
-										  const assignment = document.getElementById('storedassignmentInput'+primaryKey).value;
-										  const formattedToday = document.getElementById('dateTimeInput').value;
-										  const clockInTime = document.getElementById('ClockInTimeInput').value;
-										  if (formattedToday) {
-										  const newStore = getTransaction(clockstoreName, 'readwrite');
-										  newStore.put({
-													   date: formattedToday,
-													   clockInTime: clockInTime, // Use localDateTime here for consistency
-													   assignment: assignment,
-													   clockOutTime: null, // Leave clockOutTime as null
-													   });
-										  
-										  
-										  } else {
-										  alert('Please enter your assignment and select a date/time.');
-										  }
-										  }
-										  };
-										  
-										  request.onerror = function(event) {
-										  console.log('Failed to retrieve record:', event.target.errorCode);
-										  };
-										  displayTodaysAssignment();
-										  }
+async function clockIn(primaryKey) {
+	const now = new Date();
+	const localDateTime = formatDateTime(now);
+	const store = getTransaction(clockstoreName, 'readwrite');
+	const request = store.get(primaryKey);
+	
+	request.onsuccess = function(event) {
+		const record = event.target.result;
+		if (record) {
+				// Update the record with clockInTime
+			record.clockInTime = localDateTime;
+			record.assignment = document.getElementById('storedassignmentInput' + primaryKey).value;
+			
+				// Save the updated record back into the object store
+			const updateRequest = store.put(record);
+			updateRequest.onsuccess = function(event) {
+					// Add the Edit button after successful clock-in
+					// Now safe to call displayTodaysAssignment()
+				displayTodaysAssignment();
+			};
+			updateRequest.onerror = function(event) {
+				console.error('Error updating record:', event.target.errorCode);
+			};
+		} else {
+			console.log('Record not found');
+				// Handle case where the record does not exist
+			const assignment = document.getElementById('storedassignmentInput' + primaryKey).value;
+			const formattedToday = document.getElementById('dateTimeInput').value;
+			const clockInTime = document.getElementById('ClockInTimeInput').value;
+			
+			if (formattedToday) {
+				const newStore = getTransaction(clockstoreName, 'readwrite');
+				newStore.put({
+							 date: formattedToday,
+							 clockInTime: clockInTime,
+							 assignment: assignment,
+							 clockOutTime: null, // Leave clockOutTime as null
+							 });
+				
+					// Now safe to call displayTodaysAssignment()
+				displayTodaysAssignment();
+			} else {
+				alert('Please enter your assignment and select a date/time.');
+			}
+		}
+	};
+	
+	request.onerror = function(event) {
+		console.log('Failed to retrieve record:', event.target.errorCode);
+	};
+}
 
 
 										  
@@ -819,7 +816,8 @@ async function clockOut(primaryKey) {
 							 overtime: overtime,
 							 sessionPay: calculateSessionPay(overtime, assignment),
 							 });
-				
+					// Now safe to call displayTodaysAssignment()
+				displayTodaysAssignment();
 				
 			} else {
 				alert('Please enter your assignment and select a date/time.');
@@ -830,7 +828,7 @@ async function clockOut(primaryKey) {
 	request.onerror = function(event) {
 		console.log('Failed to retrieve record:', event.target.errorCode);
 	};
-	displayTodaysAssignment();
+	
 }
 
 
