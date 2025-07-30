@@ -1467,11 +1467,11 @@ async function exportAndUploadDB() {
 	
 	const exportData = {};
 	
-	const tx = db.transaction([clockstoreName, calstoreName, settingsstoreName], 'readonly');
+
 	const stores = {
-		[clockstoreName]: tx.objectStore(clockstoreName),
-		[calstoreName]: tx.objectStore(calstoreName),
-		[settingsstoreName]: tx.objectStore(settingsstoreName)
+		[clockstoreName]: getTransaction(clockstoreName,'readonly'),
+		[calstoreName]: getTransaction(calstoreName,'readonly'),
+		[settingsstoreName]: getTransaction(settingsstoreName,'readonly')
 	};
 	
 	for (const [storeName, store] of Object.entries(stores)) {
@@ -1500,10 +1500,10 @@ async function restoreFromServerBackup(url) {
 	const res = await fetch(url);
 	const backup = await res.json();
 	
-	const tx = db.transaction([clockstoreName, calstoreName, settingsstoreName], 'readwrite');
+
 	
 	for (const storeName of [clockstoreName, calstoreName, settingsstoreName]) {
-		const store = tx.objectStore(storeName);
+		const store = getTransaction(storeName,'readwrite');
 		for (const item of backup.data[storeName]) {
 			store.put(item);
 		}
