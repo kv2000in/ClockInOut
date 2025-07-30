@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXFileReference section */
+		2A7A1F2D2E39AE5B0053F196 /* upload_indexeddb_backup.php */ = {isa = PBXFileReference; lastKnownFileType = text.script.php; path = upload_indexeddb_backup.php; sourceTree = "<group>"; };
+		2A7A1F2E2E39B1740053F196 /* get_latest_backup.php */ = {isa = PBXFileReference; lastKnownFileType = text.script.php; path = get_latest_backup.php; sourceTree = "<group>"; };
 		2AC52F572C75A1B300D1DBE7 /* index.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = index.html; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.javascript; };
 		2AC52F582C75A1D900D1DBE7 /* server.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = server.js; sourceTree = "<group>"; };
 		2AC52F592C783F9800D1DBE7 /* service-worker.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "service-worker.js"; sourceTree = "<group>"; };
@@ -22,6 +24,8 @@
 		2AC52F502C75A19900D1DBE7 = {
 			isa = PBXGroup;
 			children = (
+				2A7A1F2E2E39B1740053F196 /* get_latest_backup.php */,
+				2A7A1F2D2E39AE5B0053F196 /* upload_indexeddb_backup.php */,
 				2AC52F612C9E710900D1DBE7 /* .well-known */,
 				2AC52F602C9E679700D1DBE7 /* icon-512x512.png */,
 				2AC52F5F2C7A82BA00D1DBE7 /* favicon.ico */,

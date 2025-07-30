@@ -290,6 +290,7 @@ function initDB(callback) {
 		db = event.target.result;
 		if (callback)
 			callback();
+		checkAndSync();
 		loadQGendaURL();
 		loadCurrentSettings();
 		navigator.serviceWorker.ready.then(function(registration) {
@@ -321,6 +322,15 @@ async function loadCurrentSettings(){
 const store = getTransaction(settingsstoreName, 'readonly');	
 	
 }
+
+
+
+document.addEventListener('visibilitychange', () => {
+						  if (document.visibilityState === 'visible') {
+						  checkAndSync();
+						  }
+						  });
+
 async function saveQGendaURL(url) {
 	const store = getTransaction(calstoreName, 'readwrite');
 	store.put({
@@ -1449,7 +1459,110 @@ function promptUserForHardReload(worker) {
 }
 
 
-										  </script>
+async function exportAndUploadDB() {
+	if (!db) {
+		console.error("Database is not initialized.");
+		return;
+	}
+	
+	const exportData = {};
+	
+	const tx = db.transaction([clockstoreName, calstoreName, settingsstoreName], 'readonly');
+	const stores = {
+		[clockstoreName]: tx.objectStore(clockstoreName),
+		[calstoreName]: tx.objectStore(calstoreName),
+		[settingsstoreName]: tx.objectStore(settingsstoreName)
+	};
+	
+	for (const [storeName, store] of Object.entries(stores)) {
+		const allRecords = await store.getAll();
+		exportData[storeName] = allRecords;
+	}
+	
+		// Send data to server
+	fetch('/upload_indexeddb_backup.php', {
+		  method: 'POST',
+		  headers: {
+		  'Content-Type': 'application/json'
+		  },
+		  body: JSON.stringify({
+							   timestamp: new Date().toISOString(),
+							   data: exportData
+							   })
+		  })
+	.then(res => res.text())
+	.then(console.log)
+	.catch(console.error);
+}
+
+
+async function restoreFromServerBackup(url) {
+	const res = await fetch(url);
+	const backup = await res.json();
+	
+	const tx = db.transaction([clockstoreName, calstoreName, settingsstoreName], 'readwrite');
+	
+	for (const storeName of [clockstoreName, calstoreName, settingsstoreName]) {
+		const store = tx.objectStore(storeName);
+		for (const item of backup.data[storeName]) {
+			store.put(item);
+		}
+	}
+	console.log("Restore complete.");
+}
+
+
+async function getLocalLastSyncTime() {
+	return new Promise((resolve) => {
+					   const store = getTransaction(settingsstoreName, 'readonly');
+					   const request = store.get('lastSync');
+					   request.onsuccess = () => resolve(request.result ? request.result.value : null);
+					   request.onerror = () => resolve(null);
+					   });
+}
+
+async function setLocalLastSyncTime(timestamp) {
+	return new Promise((resolve) => {
+					   const store = getTransaction(settingsstoreName, 'readwrite');
+					   store.put({ id: 'lastSync', value: timestamp });
+					   resolve();
+					   });
+}
+
+async function checkAndSync() {
+	try {
+		const res = await fetch('/get_latest_backup.php');
+		const data = await res.json();
+		
+		if (data.status === 'no_backup') {
+			console.log("No backup on server. Uploading local DB.");
+			await exportAndUploadDB();
+			return;
+		}
+		
+		const localTimestamp = await getLocalLastSyncTime();
+		const serverTimestamp = data.timestamp;
+		
+		if (!localTimestamp || localTimestamp < serverTimestamp) {
+				// Server is newer — restore from server
+			console.log("Restoring local DB from server backup");
+			await restoreFromServerBackup(`/backups/${data.filename}`);
+			await setLocalLastSyncTime(serverTimestamp);
+		} else if (localTimestamp > serverTimestamp) {
+				// Local is newer — push to server
+			console.log("Uploading newer local DB to server");
+			await exportAndUploadDB();
+			await setLocalLastSyncTime(Date.now());
+		} else {
+			console.log("Local and server DBs are in sync");
+		}
+	} catch (e) {
+		console.error("Sync error:", e);
+	}
+}
+
+
+</script>
 										  </body>
 										  </html>
 										  
