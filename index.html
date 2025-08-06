@@ -1464,22 +1464,28 @@ async function exportAndUploadDB() {
 		console.error("Database is not initialized.");
 		return;
 	}
-	
+
 	const exportData = {};
-	
 
 	const stores = {
-		[clockstoreName]: getTransaction(clockstoreName,'readonly'),
-		[calstoreName]: getTransaction(calstoreName,'readonly'),
-		[settingsstoreName]: getTransaction(settingsstoreName,'readonly')
+		[clockstoreName]: getTransaction(clockstoreName, 'readonly'),
+		[calstoreName]: getTransaction(calstoreName, 'readonly'),
+		[settingsstoreName]: getTransaction(settingsstoreName, 'readonly')
 	};
-	
+
 	for (const [storeName, store] of Object.entries(stores)) {
-		const allRecords = await store.getAll();
+		if (!store) continue; // skip if store couldn't be retrieved
+
+		const allRecords = await new Promise((resolve, reject) => {
+											 const req = store.getAll();
+											 req.onsuccess = () => resolve(req.result);
+											 req.onerror = () => reject(req.error);
+											 });
+
 		exportData[storeName] = allRecords;
 	}
-	
-		// Send data to server
+
+	// Send data to server
 	fetch('./upload_indexeddb_backup.php', {
 		  method: 'POST',
 		  headers: {
@@ -1494,6 +1500,7 @@ async function exportAndUploadDB() {
 	.then(console.log)
 	.catch(console.error);
 }
+
 
 
 async function restoreFromServerBackup(url) {
