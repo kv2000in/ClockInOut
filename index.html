@@ -1546,7 +1546,7 @@ async function checkAndSync() {
 		if (!localTimestamp || localTimestamp < serverTimestamp) {
 				// Server is newer — restore from server
 			console.log("Restoring local DB from server backup");
-			await restoreFromServerBackup(`/backups/${data.filename}`);
+			await restoreFromServerBackup(`./backups/${data.filename}`);
 			await setLocalLastSyncTime(serverTimestamp);
 		} else if (localTimestamp > serverTimestamp) {
 				// Local is newer — push to server
