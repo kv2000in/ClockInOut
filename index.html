@@ -1467,22 +1467,31 @@ async function exportAndUploadDB() {
 
 	const exportData = {};
 
-	const stores = {
-		[clockstoreName]: getTransaction(clockstoreName, 'readonly'),
-		[calstoreName]: getTransaction(calstoreName, 'readonly'),
-		[settingsstoreName]: getTransaction(settingsstoreName, 'readonly')
+	// Create one transaction covering all stores
+	const transaction = db.transaction(
+									   [clockstoreName, calstoreName, settingsstoreName],
+									   'readonly'
+									   );
+
+	const storeNames = [clockstoreName, calstoreName, settingsstoreName];
+
+	// Utility: getAll wrapped in Promise
+	const getAllFromStore = (storeName) => {
+		return new Promise((resolve, reject) => {
+						   const store = transaction.objectStore(storeName);
+						   const req = store.getAll();
+						   req.onsuccess = () => resolve(req.result);
+						   req.onerror = () => reject(req.error);
+						   });
 	};
 
-	for (const [storeName, store] of Object.entries(stores)) {
-		if (!store) continue; // skip if store couldn't be retrieved
-
-		const allRecords = await new Promise((resolve, reject) => {
-											 const req = store.getAll();
-											 req.onsuccess = () => resolve(req.result);
-											 req.onerror = () => reject(req.error);
-											 });
-
-		exportData[storeName] = allRecords;
+	try {
+		for (const storeName of storeNames) {
+			exportData[storeName] = await getAllFromStore(storeName);
+		}
+	} catch (err) {
+		console.error("Error while exporting data:", err);
+		return;
 	}
 
 	// Send data to server
