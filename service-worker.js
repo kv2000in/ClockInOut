@@ -19,49 +19,144 @@ self.addEventListener('install', (event) => {
 									  );
 					  });
 
-self.addEventListener('fetch', (event) => {
+
+	// =========================
+	// Utility: Fetch with timeout
+	// =========================
+function fetchWithTimeout(request, timeout) {
+	return new Promise((resolve, reject) => {
+					   const timer = setTimeout(() => {
+												console.warn('Fetch timeout for', request.url);
+												reject(new Error('timeout'));
+												}, timeout);
+					   
+					   fetch(request)
+					   .then(response => {
+							 clearTimeout(timer);
+							 resolve(response);
+							 })
+					   .catch(err => {
+							  clearTimeout(timer);
+							  reject(err);
+							  });
+					   });
+}
+
+	// =========================
+	// Intercept fetch requests
+	// =========================
+self.addEventListener('fetch', event => {
+					  const url = event.request.url;
+					  
+					  // 🗄 Special handling for DB sync endpoints
+					  if (url.includes('upload_indexeddb_backup.php')) {
 					  event.respondWith(
-										caches.open('dynamic-cache').then((cache) => {
-																		  return Promise.race([
-																							   fetchWithTimeout(event.request, 3000), // Set a 5-second timeout
-																							   caches.match(event.request) // Return from cache if fetch takes too long
-																							   ])
-																		  .then((networkResponse) => {
+										fetchWithTimeout(event.request, 10000).catch(err => {
+																					 console.warn('Backup upload failed, queuing for sync:', err);
+																					 return queueBackupForSync(event.request);
+																					 })
+										);
+					  return;
+					  }
+					  
+					  if (url.includes('get_latest_backup.php')) {
+					  event.respondWith(
+										fetchWithTimeout(event.request, 10000).catch(err => {
+																					 console.warn('Fetching latest backup failed:', err);
+																					 return caches.match(event.request);
+																					 })
+										);
+					  return;
+					  }
+					  
+					  // 🌐 Normal requests: prefer network, fallback to cache
+					  event.respondWith(
+										caches.open('dynamic-cache').then(cache => {
+																		  return fetchWithTimeout(event.request, 5000)
+																		  .then(networkResponse => {
 																				if (networkResponse && networkResponse.status === 200) {
-																				const clonedResponse = networkResponse.clone();
-																				cache.put(event.request, clonedResponse); // Update cache
+																				cache.put(event.request, networkResponse.clone());
 																				}
-																				return networkResponse || Promise.reject('no-cache'); // Serve new version or cache
+																				return networkResponse;
 																				})
-																		  .catch(() => {
-																				 return caches.match(event.request).then((cachedResponse) => {
-																														 return cachedResponse || Promise.reject('no-cache'); // Serve cache or reject
-																														 });
+																		  .catch(err => {
+																				 console.warn('Network fetch failed:', err);
+																				 return caches.match(event.request)
+																				 .then(cachedResponse => cachedResponse || Promise.reject('No cached version'));
 																				 });
 																		  })
 										);
 					  });
 
-	// Helper function to add a timeout to the fetch request
-function fetchWithTimeout(request, timeout) {
-	return new Promise((resolve, reject) => {
-					   const timer = setTimeout(() => {
-												reject(new Error('Request timed out'));
-												}, timeout);
-					   
-					   fetch(request).then(
-										   (response) => {
-										   clearTimeout(timer);
-										   resolve(response);
-										   },
-										   (err) => {
-										   clearTimeout(timer);
-										   reject(err);
-										   }
-										   );
-					   });
+	// =========================
+	// Queue backup for Background Sync
+	// =========================
+async function queueBackupForSync(request) {
+	const db = await openBackupQueueDB();
+	const cloned = await request.clone().text(); // get body contents
+	const tx = db.transaction('backups', 'readwrite');
+	tx.objectStore('backups').add({
+								  body: cloned,
+								  timestamp: Date.now()
+								  });
+	await tx.done;
+	
+		// Register a sync event
+	self.registration.sync.register('sync-backups');
+	
+		// Return a fake "queued" response to the app
+	return new Response(JSON.stringify({ queued: true }), {
+						headers: { 'Content-Type': 'application/json' }
+						});
 }
 
+	// =========================
+	// IndexedDB for queued backups
+	// =========================
+function openBackupQueueDB() {
+	return idb.openDB('backup-sync-db', 1, {
+					  upgrade(db) {
+					  if (!db.objectStoreNames.contains('backups')) {
+					  db.createObjectStore('backups', { autoIncrement: true });
+					  }
+					  }
+					  });
+}
+
+	// =========================
+	// Handle Background Sync Event
+	// =========================
+self.addEventListener('sync', async event => {
+					  if (event.tag === 'sync-backups') {
+					  event.waitUntil(processBackupQueue());
+					  }
+					  });
+
+async function processBackupQueue() {
+	const db = await openBackupQueueDB();
+	const tx = db.transaction('backups', 'readwrite');
+	const store = tx.objectStore('backups');
+	const allBackups = await store.getAll();
+	
+	for (let backup of allBackups) {
+		try {
+			const res = await fetch('/clock/upload_indexeddb_backup.php', {
+									method: 'POST',
+									headers: { 'Content-Type': 'application/json' },
+									body: backup.body
+									});
+			if (res.ok) {
+					// Remove from queue after successful upload
+				await store.delete(backup.id);
+				console.log('Backup synced successfully');
+			}
+		} catch (err) {
+			console.warn('Failed to sync backup, will retry later:', err);
+		}
+	}
+	
+	await tx.done;
+}
 
 
 
