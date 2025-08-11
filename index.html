@@ -646,6 +646,7 @@ async function editTimesfromInput(primaryKey, whichTime) {
 										  putRequest.onsuccess = function() {
 										  // Update the displayed value in the corresponding cell
 											  displayTodaysAssignment();
+											  setLocalLastSyncTime(Math.floor(Date.now() / 1000));
 										  };
 										  putRequest.onerror = function(event) {
 										  console.error('Error updating record:', event.target.error);
@@ -693,6 +694,7 @@ async function clockIn(primaryKey) {
 					// Add the Edit button after successful clock-in
 					// Now safe to call displayTodaysAssignment()
 				displayTodaysAssignment();
+				setLocalLastSyncTime(Math.floor(Date.now() / 1000));
 			};
 			updateRequest.onerror = function(event) {
 				console.error('Error updating record:', event.target.errorCode);
@@ -779,7 +781,7 @@ async function clockOut(primaryKey) {
 			updateRequest.onsuccess = function(event) {
 					// Update the UI after successful clock out
 			
-				
+				setLocalLastSyncTime(Math.floor(Date.now() / 1000));
 					// Add the Edit button next to the clockOut time
 			
 			};
@@ -959,6 +961,7 @@ async function handleUpdatedAssignment(primaryKey){
 			
 			updateRequest.onsuccess = function(event) {
 				console.log("Assignment updated");
+				setLocalLastSyncTime(Math.floor(Date.now() / 1000));
 			};
 			updateRequest.onerror = function(event) {
 				console.error('Error updating record:', event.target.errorCode);
