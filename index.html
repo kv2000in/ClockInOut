@@ -1580,6 +1580,34 @@ async function checkAndSync() {
 	}
 }
 
+let syncScheduled = false;
+
+// Trigger when tab becomes hidden (backgrounded)
+document.addEventListener('visibilitychange', () => {
+						  if (document.visibilityState === 'hidden') {
+						  scheduleSync();
+						  }
+						  });
+
+// Trigger before closing or refreshing
+window.addEventListener('beforeunload', (event) => {
+						// Ensure sync is called once
+						if (!syncScheduled) {
+						checkAndSync();
+						}
+						// Optionally prevent unload if sync is critical
+						// event.preventDefault();
+						// event.returnValue = '';
+						});
+
+// Helper to avoid back-to-back duplicate calls
+function scheduleSync() {
+	if (!syncScheduled) {
+		syncScheduled = true;
+		checkAndSync();
+		setTimeout(() => syncScheduled = false, 5000); // Allow sync again after 5s
+	}
+}
 
 </script>
 										  </body>
